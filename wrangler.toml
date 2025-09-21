@@ -1,0 +1,58 @@
+# Wrangler configuration for TextArtTools MCP Server
+name = "textarttools-mcp-server"
+main = "dist/index.js"
+compatibility_date = "2025-01-20"
+compatibility_flags = ["nodejs_compat"]
+
+# Worker configuration
+[env.production]
+name = "textarttools-mcp-server"
+routes = [
+  "textarttools-mcp.your-domain.com/*"
+]
+
+[env.development]
+name = "textarttools-mcp-server-dev"
+
+# Environment variables (use wrangler secret for sensitive values)
+[vars]
+ENVIRONMENT = "production"
+CORS_ORIGIN = "*"
+RATE_LIMIT_PER_MINUTE = "100"
+MAX_TEXT_LENGTH = "10000"
+
+# Secrets to be set with `wrangler secret put <name>`
+# GITHUB_CLIENT_ID = "your_github_oauth_client_id"
+# GITHUB_CLIENT_SECRET = "your_github_oauth_client_secret"
+# JWT_SECRET = "your_jwt_secret_for_token_signing"
+
+# Analytics and monitoring (configure for production deployment)
+# [[analytics_engine_datasets]]
+# binding = "MCP_ANALYTICS"
+# dataset = "textarttools_mcp_usage"
+
+# KV namespaces for session storage (configure these with actual IDs for deployment)
+# [[kv_namespaces]]
+# binding = "MCP_SESSIONS"
+# id = "your_kv_namespace_id_here"
+# preview_id = "your_preview_kv_namespace_id_here"
+
+# Durable Objects (if needed for advanced session management)
+# [[durable_objects.bindings]]
+# name = "SESSION_MANAGER"
+# class_name = "SessionManager"
+
+# Build configuration
+[build]
+command = "npm run build"
+cwd = "."
+watch_dir = "src"
+
+# Development configuration
+[dev]
+port = 8788
+local_protocol = "http"
+
+# Limits
+[limits]
+cpu_ms = 30000

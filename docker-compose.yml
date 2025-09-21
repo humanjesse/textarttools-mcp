@@ -1,0 +1,172 @@
+# Docker Compose configuration for TextArtTools MCP Server
+# Provides development, testing, and CI environments
+
+version: '3.8'
+
+services:
+  # Development service with hot reload
+  dev:
+    build:
+      context: .
+      target: development
+      dockerfile: Dockerfile
+    container_name: textarttools-mcp-dev
+    ports:
+      - "8788:8788"
+    volumes:
+      # Mount source code for hot reload
+      - .:/app
+      # Exclude node_modules from host (use container's version)
+      - /app/node_modules
+      # Mount .dev.vars for environment variables
+      - ./.dev.vars:/app/.dev.vars:ro
+    environment:
+      - NODE_ENV=development
+      - WRANGLER_SEND_METRICS=false
+    command: npm run dev
+    restart: unless-stopped
+    networks:
+      - mcp-network
+
+  # Testing service for running tests
+  test:
+    build:
+      context: .
+      target: testing
+      dockerfile: Dockerfile
+    container_name: textarttools-mcp-test
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - ./.dev.vars:/app/.dev.vars:ro
+    environment:
+      - NODE_ENV=test
+    command: npm test
+    networks:
+      - mcp-network
+
+  # Test with coverage
+  test-coverage:
+    build:
+      context: .
+      target: testing
+      dockerfile: Dockerfile
+    container_name: textarttools-mcp-test-coverage
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - ./.dev.vars:/app/.dev.vars:ro
+    environment:
+      - NODE_ENV=test
+    command: npm run test:coverage
+    networks:
+      - mcp-network
+
+  # Build service for creating production build
+  build:
+    build:
+      context: .
+      target: build
+      dockerfile: Dockerfile
+    container_name: textarttools-mcp-build
+    volumes:
+      - .:/app
+      - /app/node_modules
+      # Mount dist directory to host
+      - ./dist:/app/dist
+    environment:
+      - NODE_ENV=production
+    command: npm run build
+    networks:
+      - mcp-network
+
+  # Lint service for code quality checks
+  lint:
+    build:
+      context: .
+      target: development
+      dockerfile: Dockerfile
+    container_name: textarttools-mcp-lint
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    command: npm run lint
+    networks:
+      - mcp-network
+
+  # Type check service
+  typecheck:
+    build:
+      context: .
+      target: development
+      dockerfile: Dockerfile
+    container_name: textarttools-mcp-typecheck
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    command: npm run typecheck
+    networks:
+      - mcp-network
+
+  # CI service for continuous integration
+  ci:
+    build:
+      context: .
+      target: ci
+      dockerfile: Dockerfile
+    container_name: textarttools-mcp-ci
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=test
+      - CI=true
+    command: |
+      sh -c "
+        echo 'Running CI pipeline...' &&
+        npm run lint &&
+        npm run typecheck &&
+        npm run test:coverage &&
+        npm run build &&
+        echo 'CI pipeline completed successfully!'
+      "
+    networks:
+      - mcp-network
+
+  # MCP protocol testing service
+  mcp-test:
+    build:
+      context: .
+      target: testing
+      dockerfile: Dockerfile
+    container_name: textarttools-mcp-protocol-test
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - ./.dev.vars:/app/.dev.vars:ro
+    environment:
+      - NODE_ENV=test
+    command: npm run test:mcp
+    depends_on:
+      - dev
+    networks:
+      - mcp-network
+
+networks:
+  mcp-network:
+    driver: bridge
+    name: textarttools-mcp-network
+
+# Development helper commands:
+# docker-compose up dev              # Start development server
+# docker-compose run test            # Run tests once
+# docker-compose run test-coverage   # Run tests with coverage
+# docker-compose run build           # Build for production
+# docker-compose run lint            # Run linter
+# docker-compose run typecheck       # Run TypeScript type checking
+# docker-compose run ci              # Run full CI pipeline
+# docker-compose run mcp-test        # Test MCP protocol compliance

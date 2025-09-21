@@ -1,0 +1,52 @@
+{
+  "name": "textarttools-mcp-server",
+  "version": "1.0.0",
+  "description": "Model Context Protocol server for Unicode text styling powered by Cloudflare Workers",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "start": "wrangler dev --local",
+    "deploy": "wrangler deploy",
+    "build": "tsc",
+    "test": "vitest",
+    "test:coverage": "vitest --coverage",
+    "lint": "eslint src/**/*.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "unicode",
+    "text-styling",
+    "cloudflare-workers",
+    "ai",
+    "claude"
+  ],
+  "author": "TextArtTools",
+  "license": "MIT",
+  "dependencies": {
+    "@cloudflare/workers-types": "^4.20250106.0",
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.9",
+    "@typescript-eslint/eslint-plugin": "^8.18.2",
+    "@typescript-eslint/parser": "^8.18.2",
+    "eslint": "^9.18.0",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8",
+    "wrangler": "^4.38.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/textarttools-mcp-server.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/textarttools-mcp-server/issues"
+  },
+  "homepage": "https://github.com/your-username/textarttools-mcp-server#readme"
+}
