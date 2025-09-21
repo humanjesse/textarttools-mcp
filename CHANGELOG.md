@@ -9,10 +9,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Planned Features
 - Comprehensive test suite implementation
-- Security hardening with enhanced input validation
+- Enhanced input validation and sanitization
 - CI/CD pipeline with GitHub Actions
 - Monitoring and observability with OpenTelemetry
 - Performance optimizations and caching
+
+## [0.3.0] - 2025-09-21 - Security Headers Implementation
+
+### Added
+- **Comprehensive Security Headers**
+  - Content Security Policy (CSP) with nonce-based protection
+  - HTTP Strict Transport Security (HSTS) with 1-year max-age
+  - X-Frame-Options for clickjacking protection
+  - Permissions-Policy restricting browser features
+  - Cross-Origin policies (COEP, COOP, CORP)
+  - Additional security headers (X-Content-Type-Options, Referrer-Policy, etc.)
+- **Environment-based Security Configuration**
+  - SECURITY_LEVEL environment variable (permissive/standard/strict)
+  - CSP reporting endpoint configuration
+  - Production and development security profiles
+
+### Changed
+- **Enhanced Production Security**: All endpoints now include comprehensive security headers
+- **Updated Environment Configuration**: Added security settings to wrangler.toml
+
+### Deployment
+- ✅ **Live on Production**: Security headers active on mcp.textarttools.com
+- ✅ **Verified Functionality**: All MCP tools working with security headers applied
 
 ## [0.2.0] - 2025-09-21 - MCP Protocol Compliance & Docker Environment
 

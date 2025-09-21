@@ -1,7 +1,7 @@
 /**
- * TextArtTools MCP Server - MVP Entry Point
- * Simplified version without complex security features
- * Cloudflare Workers provide built-in security
+ * TextArtTools MCP Server - MVP Entry Point with Security Headers
+ * Enhanced with comprehensive security headers for protection against web threats
+ * Cloudflare Workers provide built-in security + application-level security headers
  */
 
 import type { Env, AnalyticsEvent } from './types.js';
@@ -9,6 +9,7 @@ import { RateLimitError } from './types.js';
 
 import { mcpToolDefinitions, handleToolCall } from './mcp-tools.js';
 import { GitHubOAuth, RateLimiter, getClientIP, getCorsHeaders } from './auth.js';
+import { SecurityHeaders } from './security/security-headers.js';
 import {
   getStyleDefinitions,
   getCharacterMappings,
@@ -25,16 +26,19 @@ export default {
     const requestId = crypto.randomUUID();
     const clientIp = getClientIP(request);
 
-    // MVP: Basic CORS headers
+    // Initialize security headers middleware
+    const securityHeaders = new SecurityHeaders(env);
+
+    // Basic CORS headers (will be combined with security headers)
     const corsHeaders = getCorsHeaders(env.CORS_ORIGIN || '*');
 
     try {
       // Handle CORS preflight requests
       if (request.method === 'OPTIONS') {
-        return new Response(null, {
+        return securityHeaders.createSecureResponse(null, {
           status: 200,
           headers: corsHeaders
-        });
+        }, requestId);
       }
 
       const url = new URL(request.url);
@@ -44,26 +48,26 @@ export default {
 
       // Handle different endpoints
       if (url.pathname === '/' || url.pathname === '') {
-        return handleApiDocs(corsHeaders);
+        return handleApiDocs(corsHeaders, securityHeaders, requestId);
       }
 
       if (url.pathname === '/sse') {
-        return handleSSE(request, env, corsHeaders);
+        return handleSSE(request, env, corsHeaders, securityHeaders, requestId);
       }
 
       if (url.pathname.startsWith('/auth/')) {
-        return handleAuth(request, env, corsHeaders);
+        return handleAuth(request, env, corsHeaders, securityHeaders, requestId);
       }
 
       if (url.pathname === '/health') {
-        return handleHealth(corsHeaders);
+        return handleHealth(corsHeaders, securityHeaders, requestId);
       }
 
       // Default 404
-      return new Response('Not Found', {
+      return securityHeaders.createSecureResponse('Not Found', {
         status: 404,
         headers: corsHeaders
-      });
+      }, requestId);
 
     } catch (error) {
       console.error('Request error:', error);
@@ -74,13 +78,13 @@ export default {
         message: error instanceof Error ? error.message : 'Unknown error'
       };
 
-      return new Response(JSON.stringify(errorResponse), {
+      return securityHeaders.createSecureResponse(JSON.stringify(errorResponse), {
         status: 500,
         headers: {
           'Content-Type': 'application/json',
           ...corsHeaders
         }
-      });
+      }, requestId);
     }
   }
 };
@@ -88,7 +92,7 @@ export default {
 /**
  * Handle Server-Sent Events for MCP protocol
  */
-async function handleSSE(request: Request, env: Env, corsHeaders: HeadersInit): Promise<Response> {
+async function handleSSE(request: Request, env: Env, corsHeaders: HeadersInit, securityHeaders: SecurityHeaders, requestId: string): Promise<Response> {
   const clientIp = getClientIP(request);
 
   // MVP: Basic rate limiting (simplified)
@@ -102,10 +106,10 @@ async function handleSSE(request: Request, env: Env, corsHeaders: HeadersInit): 
   }
 
   if (request.method !== 'POST') {
-    return new Response('Method not allowed', {
+    return securityHeaders.createSecureResponse('Method not allowed', {
       status: 405,
       headers: corsHeaders
-    });
+    }, requestId);
   }
 
   const body = await request.text();
@@ -123,13 +127,13 @@ async function handleSSE(request: Request, env: Env, corsHeaders: HeadersInit): 
       }
     };
 
-    return new Response(JSON.stringify(errorResponse), {
+    return securityHeaders.createSecureResponse(JSON.stringify(errorResponse), {
       status: 400,
       headers: {
         'Content-Type': 'application/json',
         ...corsHeaders
       }
-    });
+    }, requestId);
   }
 
   // Handle different MCP methods
@@ -202,62 +206,63 @@ async function handleSSE(request: Request, env: Env, corsHeaders: HeadersInit): 
     };
   }
 
-  return new Response(JSON.stringify(response), {
+  return securityHeaders.createSecureResponse(JSON.stringify(response), {
     status: 200,
     headers: {
       'Content-Type': 'application/json',
       ...corsHeaders
     }
-  });
+  }, requestId);
 }
 
 /**
  * Handle authentication endpoints
  */
-async function handleAuth(request: Request, env: Env, corsHeaders: HeadersInit): Promise<Response> {
+async function handleAuth(request: Request, env: Env, corsHeaders: HeadersInit, securityHeaders: SecurityHeaders, requestId: string): Promise<Response> {
   const url = new URL(request.url);
   const baseUrl = `${url.protocol}//${url.host}`;
   const oauth = new GitHubOAuth(env, baseUrl);
 
   if (url.pathname === '/auth/authorize') {
     const authUrl = oauth.getAuthorizationUrl('state-placeholder');
-    return Response.redirect(authUrl, 302);
+    const redirectResponse = Response.redirect(authUrl, 302);
+    return securityHeaders.applyHeaders(redirectResponse, requestId);
   }
 
   if (url.pathname === '/auth/callback') {
     const code = url.searchParams.get('code');
     if (!code) {
-      return new Response('Missing authorization code', {
+      return securityHeaders.createSecureResponse('Missing authorization code', {
         status: 400,
         headers: corsHeaders
-      });
+      }, requestId);
     }
 
     try {
       const session = await oauth.exchangeCodeForToken(code);
-      return new Response(`Authentication successful! Session: ${session}`, {
+      return securityHeaders.createSecureResponse(`Authentication successful! Session: ${session}`, {
         status: 200,
         headers: corsHeaders
-      });
+      }, requestId);
     } catch (error) {
       console.error('OAuth error:', error);
-      return new Response('Authentication failed', {
+      return securityHeaders.createSecureResponse('Authentication failed', {
         status: 500,
         headers: corsHeaders
-      });
+      }, requestId);
     }
   }
 
-  return new Response('Not Found', {
+  return securityHeaders.createSecureResponse('Not Found', {
     status: 404,
     headers: corsHeaders
-  });
+  }, requestId);
 }
 
 /**
  * Handle API documentation for AIs
  */
-function handleApiDocs(corsHeaders: HeadersInit): Response {
+function handleApiDocs(corsHeaders: HeadersInit, securityHeaders: SecurityHeaders, requestId: string): Response {
   const apiDocs = {
     name: 'TextArtTools MCP Server',
     description: 'Unicode text styling API using Model Context Protocol (MCP)',
@@ -303,19 +308,19 @@ function handleApiDocs(corsHeaders: HeadersInit): Response {
     ]
   };
 
-  return new Response(JSON.stringify(apiDocs, null, 2), {
+  return securityHeaders.createSecureResponse(JSON.stringify(apiDocs, null, 2), {
     status: 200,
     headers: {
       'Content-Type': 'application/json',
       ...corsHeaders
     }
-  });
+  }, requestId);
 }
 
 /**
  * Handle health check
  */
-function handleHealth(corsHeaders: HeadersInit): Response {
+function handleHealth(corsHeaders: HeadersInit, securityHeaders: SecurityHeaders, requestId: string): Response {
   const healthStatus = {
     status: 'healthy',
     timestamp: new Date().toISOString(),
@@ -326,13 +331,13 @@ function handleHealth(corsHeaders: HeadersInit): Response {
     }
   };
 
-  return new Response(JSON.stringify(healthStatus), {
+  return securityHeaders.createSecureResponse(JSON.stringify(healthStatus), {
     status: 200,
     headers: {
       'Content-Type': 'application/json',
       ...corsHeaders
     }
-  });
+  }, requestId);
 }
 
 /**

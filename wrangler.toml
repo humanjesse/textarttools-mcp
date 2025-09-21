@@ -21,6 +21,10 @@ CORS_ORIGIN = "*"
 RATE_LIMIT_PER_MINUTE = "100"
 MAX_TEXT_LENGTH = "10000"
 
+# Security configuration
+SECURITY_LEVEL = "standard"
+CSP_REPORT_ENDPOINT = "/csp-report"
+
 # KV namespaces for production
 [[env.production.kv_namespaces]]
 binding = "MCP_SESSIONS"
@@ -35,6 +39,9 @@ ENVIRONMENT = "development"
 CORS_ORIGIN = "*"
 RATE_LIMIT_PER_MINUTE = "100"
 MAX_TEXT_LENGTH = "10000"
+
+# Security configuration (permissive for development)
+SECURITY_LEVEL = "permissive"
 
 # KV namespaces for development
 [[env.development.kv_namespaces]]

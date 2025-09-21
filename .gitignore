@@ -47,6 +47,26 @@ coverage/
 
 # TypeScript
 *.tsbuildinfo
+*.tsbuildinfo.json
+
+# Testing
+jest-results.json
+test-results/
+security-test-results/
+vulnerability-reports/
+
+# Additional build artifacts
+.eslintcache
+
+# Editor backups
+*.bak
+*.backup
+
+# Docker overrides
+docker-compose.override.yml
+
+# Additional Cloudflare Workers
+*.wasm
 
 # Temporary folders
 tmp/

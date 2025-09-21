@@ -1,9 +1,46 @@
 # Security Documentation
 ## TextArtTools MCP Server - Enterprise Security Architecture
 
-[![Security Status](https://img.shields.io/badge/Security-Enterprise%20Grade-green.svg)](./SECURITY.md)
-[![Compliance](https://img.shields.io/badge/Compliance-SOC2%20Ready-blue.svg)](./SECURITY.md)
+> **ℹ️ CURRENT STATUS**: The live server at `mcp.textarttools.com` includes **comprehensive security headers** (CSP, HSTS, X-Frame-Options). Additional enterprise security features documented below are **available but currently unused**. This documentation represents the **future upgrade path** when advanced security is required.
+
+[![Security Status](https://img.shields.io/badge/Security-MVP%20Deployment-yellow.svg)](./SECURITY.md)
+[![Enterprise Ready](https://img.shields.io/badge/Enterprise-Available%20Not%20Active-blue.svg)](./SECURITY.md)
 [![Last Updated](https://img.shields.io/badge/Last%20Updated-2025--01-brightgreen.svg)](./SECURITY.md)
+
+---
+
+## Current MVP Security Model
+
+### **✅ Live Server Security (Currently Active)**
+
+The production server at `mcp.textarttools.com` uses comprehensive security headers:
+
+- **Cloudflare Workers Protection**: Built-in DDoS protection, global edge security
+- **Security Headers**: Content Security Policy (CSP), HSTS, X-Frame-Options, Permissions-Policy
+- **Basic Rate Limiting**: KV-based request limiting (100 requests/minute)
+- **Input Validation**: Basic text length and format validation
+- **CORS Headers**: Cross-origin request protection
+- **No Authentication Required**: Public access for AI agent integration
+
+### **🏢 Enterprise Security (Available, Unused)**
+
+The enterprise security features documented below are **implemented but currently inactive**:
+
+- Advanced input validation and sanitization
+- Content Security Policy (CSP) enforcement
+- Audit logging with tamper protection
+- Request signing and validation
+- OAuth 2.0 authentication with GitHub
+- Secret rotation and management
+- Comprehensive monitoring and alerting
+
+### **Upgrade Path**
+
+To activate enterprise security features:
+1. Replace `src/index.ts` with `src/index-original.ts`
+2. Replace `src/mcp-tools.ts` with `src/mcp-tools-original.ts`
+3. Activate security modules in `src/security/`
+4. Update deployment configuration for enterprise bindings
 
 ---
 

@@ -98,6 +98,10 @@ export interface Env {
   RATE_LIMIT_PER_MINUTE: string;
   MAX_TEXT_LENGTH: string;
 
+  // Security configuration
+  SECURITY_LEVEL?: string; // 'strict' | 'standard' | 'permissive'
+  CSP_REPORT_ENDPOINT?: string;
+
   // Cloudflare bindings (optional for development)
   MCP_SESSIONS?: KVNamespace;
   MCP_ANALYTICS?: AnalyticsEngineDataset;

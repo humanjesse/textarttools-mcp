@@ -123,7 +123,7 @@ export class SecurityHeaders {
    * Build CSP configuration based on security level
    */
   private buildCSPConfig(level: SecurityLevel, reportUri?: string): Partial<CSPConfig> {
-    const baseCSP: CSPConfig = {
+    const baseCSP: Partial<CSPConfig> = {
       defaultSrc: ["'none'"],
       scriptSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'"], // Allow inline styles for basic functionality
@@ -141,9 +141,12 @@ export class SecurityHeaders {
       baseUri: ["'self'"],
       upgradeInsecureRequests: true,
       blockAllMixedContent: true,
-      reportUri,
       reportOnly: false
     };
+
+    if (reportUri) {
+      baseCSP.reportUri = reportUri;
+    }
 
     switch (level) {
       case 'strict':

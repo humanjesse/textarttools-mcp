@@ -1,110 +1,128 @@
 # TextArtTools MCP Server
 
-A Model Context Protocol (MCP) server that provides Unicode text styling capabilities, deployed on Cloudflare Workers. This server enables AI agents to transform text using 23 different Unicode styles including bold, italic, cursive, fraktur, zalgo, and many more.
+**✅ Live and Ready to Use**: `https://mcp.textarttools.com`
 
-## Features
+A production-ready Model Context Protocol (MCP) server providing Unicode text styling capabilities. Transform text using 23 different Unicode styles including bold, italic, cursive, fraktur, zalgo, and many more. Currently deployed on Cloudflare Workers and ready for immediate integration with AI agents.
 
-- **23 Unicode Text Styles**: Bold, italic, cursive, fraktur, zalgo, circled, squared, and more
-- **MCP Protocol Compliance**: Full JSON-RPC 2.0 implementation with Server-Sent Events
-- **OAuth Authentication**: Secure GitHub OAuth integration
-- **Rate Limiting**: Configurable rate limiting per user/IP
-- **Analytics**: Built-in usage tracking with Cloudflare Analytics
-- **Serverless**: Deployed on Cloudflare Workers for global performance
-- **Pay-per-use**: Optimized for Cloudflare's pay-per-use pricing model
+## 🚀 Quick Start - Use the Live Server
 
-## Quick Start
+**No setup required!** The server is live and operational:
 
-### 1. Deploy to Cloudflare Workers
+### Integrate with Claude Desktop
 
-[![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/your-username/textarttools-mcp-server)
-
-### 2. Configure GitHub OAuth
-
-1. Create a GitHub OAuth App:
-   - Go to GitHub Settings > Developer settings > OAuth Apps
-   - Click "New OAuth App"
-   - Set Authorization callback URL to: `https://your-worker.your-subdomain.workers.dev/auth/callback`
-
-2. Set environment variables:
-   ```bash
-   wrangler secret put GITHUB_CLIENT_ID
-   wrangler secret put GITHUB_CLIENT_SECRET
-   wrangler secret put JWT_SECRET
-   ```
-
-### 3. Integrate with Claude Desktop
-
-1. Install mcp-remote proxy:
+1. **Install mcp-remote proxy**:
    ```bash
    npm install -g @anthropic/mcp-remote
    ```
 
-2. Add to your Claude Desktop config (`claude_desktop_config.json`):
+2. **Add to Claude Desktop config** (`claude_desktop_config.json`):
    ```json
    {
      "mcp": {
        "servers": {
          "textarttools": {
            "command": "mcp-remote",
-           "args": ["sse", "https://your-worker.your-subdomain.workers.dev/sse"]
+           "args": ["sse", "https://mcp.textarttools.com/sse"]
          }
        }
      }
    }
    ```
 
-3. Authenticate:
-   - Visit `https://your-worker.your-subdomain.workers.dev/auth/authorize`
-   - Complete GitHub OAuth flow
-   - Use the provided session token
+3. **Start using it immediately**:
+   - All 23 Unicode styles available
+   - 100 requests per minute
+   - No authentication required
 
-## API Reference
+## Features
 
-### Tools
+- **✅ 23 Unicode Text Styles**: Bold, italic, cursive, fraktur, zalgo, circled, squared, and more
+- **✅ Full MCP Protocol**: JSON-RPC 2.0 with Server-Sent Events, Resources API, Prompts API
+- **✅ Live Deployment**: Production server at `mcp.textarttools.com`
+- **✅ Security Headers**: CSP, HSTS, X-Frame-Options, and security controls
+- **✅ Rate Limiting**: 100 requests/minute with KV-based tracking
+- **✅ Analytics Ready**: Cloudflare Analytics Engine integration
+- **✅ Global Performance**: Cloudflare Workers edge deployment
+- **✅ AI-Friendly**: API documentation endpoint for auto-discovery
 
-#### `unicode_style_text`
-Transform text using a specified Unicode style.
+## API Usage Examples
+
+### Direct API Calls
+
+Test the live server directly:
+
+```bash
+# Transform text to bold style
+curl -X POST https://mcp.textarttools.com/sse \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "tools/call",
+    "params": {
+      "name": "unicode_style_text",
+      "arguments": {
+        "text": "Hello World",
+        "style": "bold"
+      }
+    }
+  }'
+
+# List all available styles
+curl -X POST https://mcp.textarttools.com/sse \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 2,
+    "method": "tools/call",
+    "params": {
+      "name": "list_available_styles",
+      "arguments": {}
+    }
+  }'
+```
+
+### API Discovery
+
+Visit `https://mcp.textarttools.com/` for comprehensive API documentation designed for AI agents.
+
+## MCP Tools Available
+
+The server provides 4 MCP tools for text styling:
+
+### 1. `unicode_style_text`
+Transform text using any of the 23 Unicode styles.
 
 **Parameters:**
-- `text` (string): The text to transform
+- `text` (string): The text to transform (max 10,000 characters)
 - `style` (string): One of 23 supported styles
-- `preserve_spacing` (boolean, optional): Preserve original spacing
+- `preserve_spacing` (boolean, optional): Preserve original spacing (default: true)
 
-**Example:**
-```json
-{
-  "text": "Hello World",
-  "style": "bold"
-}
-```
+**Returns:**
+- `styled_text` (string): The transformed text
+- `style_applied` (string): The style that was applied
+- `character_count` (number): Number of characters processed
 
-**Result:**
-```json
-{
-  "styled_text": "𝗛𝗲𝗹𝗹𝗼 𝗪𝗼𝗿𝗹𝗱",
-  "style_applied": "bold",
-  "character_count": 11,
-  "processing_time_ms": 2
-}
-```
-
-#### `list_available_styles`
+### 2. `list_available_styles`
 Get all available text styles with examples and metadata.
 
 **Parameters:** None
+**Returns:** Array of style definitions with examples
 
-#### `preview_styles`
+### 3. `preview_styles`
 Preview text in multiple styles for comparison.
 
 **Parameters:**
 - `text` (string): Text to preview (max 50 characters)
 - `styles` (array, optional): Specific styles to include
 
-#### `get_style_info`
+### 4. `get_style_info`
 Get detailed information about a specific style.
 
 **Parameters:**
 - `style` (string): The style to get information about
+
+**Returns:** Detailed style metadata including Unicode ranges and platform compatibility
 
 ### Supported Styles
 
@@ -132,120 +150,111 @@ Get detailed information about a specific style.
 22. **boldItalicSerif** - 𝑩𝒐𝒍𝒅 𝑰𝒕𝒂𝒍𝒊𝒄 𝑺𝒆𝒓𝒊𝒇
 23. **boldFraktur** - 𝕭𝖔𝖑𝖉 𝕱𝖗𝖆𝖐
 
-## Development
+## Local Development (Optional)
 
-### Local Development
+If you want to run your own instance or contribute to development:
 
-1. Clone the repository:
+### Setup
+
+1. **Clone the repository**:
    ```bash
    git clone https://github.com/your-username/textarttools-mcp-server.git
    cd textarttools-mcp-server
    ```
 
-2. Install dependencies:
+2. **Install dependencies**:
    ```bash
    npm install
    ```
 
-3. Set up environment variables:
-   ```bash
-   cp .dev.vars.example .dev.vars
-   # Edit .dev.vars with your values
-   ```
-
-4. Start development server:
+3. **Start development server**:
    ```bash
    npm run dev
    ```
 
-5. Test locally:
+4. **Test locally**:
    ```bash
    curl -X POST http://localhost:8788/sse \
      -H "Content-Type: application/json" \
      -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
    ```
 
-### Testing
+### Development Commands
 
 ```bash
+npm run dev        # Start development server
+npm run build      # Build for production
+npm run deploy     # Deploy to Cloudflare Workers
+npm run lint       # Code linting
+npm run typecheck  # TypeScript validation
+```
+
+### Docker Development (Alternative)
+
+```bash
+# Run development environment
+docker-compose up dev
+
 # Run tests
-npm test
+docker-compose up test
 
-# Run tests with coverage
-npm run test:coverage
-
-# Lint code
-npm run lint
-
-# Type check
-npm run typecheck
+# Run build
+docker-compose up build
 ```
 
-### Deployment
+## Server Endpoints
 
-```bash
-# Deploy to Cloudflare Workers
-npm run deploy
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/` | GET | API documentation for AI discovery |
+| `/sse` | POST | MCP JSON-RPC 2.0 endpoint |
+| `/health` | GET | Server health check |
+| `/auth/*` | Various | OAuth authentication (optional) |
 
-# Deploy to specific environment
-wrangler deploy --env production
-```
+## Architecture
 
-## Configuration
+### MVP Implementation
+- **Simple & Reliable**: Focused on core functionality
+- **Cloudflare Security**: Built-in DDoS protection and global performance
+- **Basic Rate Limiting**: KV-based request limiting
+- **No Authentication Required**: Public access for AI agents
 
-### Environment Variables
+### Enterprise Features Available
+Advanced security and monitoring features are implemented but currently unused:
+- Content Security Policy (CSP) enforcement
+- Audit logging with tamper protection
+- Request signing and validation
+- Advanced authentication and authorization
+- Comprehensive monitoring and alerting
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `GITHUB_CLIENT_ID` | GitHub OAuth client ID | Required |
-| `GITHUB_CLIENT_SECRET` | GitHub OAuth client secret | Required |
-| `JWT_SECRET` | Secret for JWT token signing | Required |
-| `CORS_ORIGIN` | Allowed CORS origins | `*` |
-| `RATE_LIMIT_PER_MINUTE` | Rate limit per minute | `100` |
-| `MAX_TEXT_LENGTH` | Maximum text length | `10000` |
+See `SECURITY.md` for enterprise security documentation.
 
-### Cloudflare Bindings
+## Links & Resources
 
-- **KV Namespace**: `MCP_SESSIONS` - For session storage
-- **Analytics Engine**: `MCP_ANALYTICS` - For usage tracking
+- **Live Server**: `https://mcp.textarttools.com`
+- **API Documentation**: `https://mcp.textarttools.com/` (AI-friendly)
+- **Health Check**: `https://mcp.textarttools.com/health`
+- **Development Plan**: [plan.md](plan.md) - Implementation status and roadmap
+- **Security Guide**: [SECURITY.md](SECURITY.md) - Enterprise security documentation
+- **Model Context Protocol**: [MCP Specification](https://modelcontextprotocol.io/)
 
-## Security
+## Status
 
-- OAuth 2.0 authentication via GitHub
-- Rate limiting per user/IP
-- Input validation and sanitization
-- CORS protection
-- Session management with expiration
-- Secure secret storage with Wrangler
-
-## Monitoring
-
-The server includes built-in analytics and health checks:
-
-- **Health Check**: `GET /health`
-- **Analytics**: Automatic usage tracking via Cloudflare Analytics Engine
-- **Logs**: Structured logging for debugging and monitoring
+**✅ MVP Complete & Deployed**
+- Production-ready MCP server
+- 23 Unicode text transformation styles
+- Full MCP protocol compliance
+- Global Cloudflare Workers deployment
+- Ready for AI agent integration
 
 ## Contributing
 
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
-4. Add tests
+4. Test with the development server
 5. Submit a pull request
 
 ## License
 
 MIT License - see [LICENSE](LICENSE) file for details.
-
-## Support
-
-- **Documentation**: See [plan.md](plan.md) for detailed implementation guide
-- **Issues**: Report bugs and feature requests on GitHub
-- **Discussions**: Join the community discussions
-
-## Related Projects
-
-- [TextArtTools](https://github.com/your-username/textarttools-fullstack) - Full-stack text art application
-- [Model Context Protocol](https://modelcontextprotocol.io/) - Official MCP specification
-- [Claude Desktop](https://claude.ai/desktop) - AI assistant with MCP support
