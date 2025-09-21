@@ -43,6 +43,10 @@ export default {
       console.log(`${request.method} ${url.pathname} - ${clientIp}`);
 
       // Handle different endpoints
+      if (url.pathname === '/' || url.pathname === '') {
+        return handleApiDocs(corsHeaders);
+      }
+
       if (url.pathname === '/sse') {
         return handleSSE(request, env, corsHeaders);
       }
@@ -247,6 +251,64 @@ async function handleAuth(request: Request, env: Env, corsHeaders: HeadersInit):
   return new Response('Not Found', {
     status: 404,
     headers: corsHeaders
+  });
+}
+
+/**
+ * Handle API documentation for AIs
+ */
+function handleApiDocs(corsHeaders: HeadersInit): Response {
+  const apiDocs = {
+    name: 'TextArtTools MCP Server',
+    description: 'Unicode text styling API using Model Context Protocol (MCP)',
+    version: '1.0.0',
+    endpoints: {
+      mcp: {
+        url: '/sse',
+        method: 'POST',
+        description: 'MCP JSON-RPC 2.0 endpoint for text styling',
+        content_type: 'application/json',
+        example_request: {
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'tools/call',
+          params: {
+            name: 'unicode_style_text',
+            arguments: {
+              text: 'Hello World',
+              style: 'bold'
+            }
+          }
+        },
+        available_styles: [
+          'normal', 'bold', 'italic', 'boldItalic', 'underline', 'strikethrough',
+          'subscript', 'superscript', 'circled', 'fraktur', 'doubleStruck',
+          'monospace', 'cursive', 'squared', 'flipped', 'zalgo', 'blue',
+          'parenthesized', 'negativeCircled', 'boldSerif', 'italicSerif',
+          'boldItalicSerif', 'boldFraktur'
+        ]
+      },
+      health: {
+        url: '/health',
+        method: 'GET',
+        description: 'Server health check'
+      }
+    },
+    instructions_for_ai: [
+      'Use POST method to /sse endpoint',
+      'Set Content-Type: application/json header',
+      'Send JSON-RPC 2.0 formatted requests',
+      'Use tools/call method with unicode_style_text tool',
+      'Specify text and style in arguments object'
+    ]
+  };
+
+  return new Response(JSON.stringify(apiDocs, null, 2), {
+    status: 200,
+    headers: {
+      'Content-Type': 'application/json',
+      ...corsHeaders
+    }
   });
 }
 

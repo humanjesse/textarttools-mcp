@@ -1,25 +1,45 @@
 # Wrangler configuration for TextArtTools MCP Server
-name = "textarttools-mcp-server"
+name = "textarttools-mcp"
 main = "dist/index.js"
 compatibility_date = "2025-01-20"
 compatibility_flags = ["nodejs_compat"]
 
+# Default configuration
+workers_dev = false
+
 # Worker configuration
 [env.production]
-name = "textarttools-mcp-server"
+name = "textarttools-mcp"
 routes = [
-  "textarttools-mcp.your-domain.com/*"
+  "mcp.textarttools.com/*"
 ]
 
-[env.development]
-name = "textarttools-mcp-server-dev"
-
-# Environment variables (use wrangler secret for sensitive values)
-[vars]
+# Environment variables for production
+[env.production.vars]
 ENVIRONMENT = "production"
 CORS_ORIGIN = "*"
 RATE_LIMIT_PER_MINUTE = "100"
 MAX_TEXT_LENGTH = "10000"
+
+# KV namespaces for production
+[[env.production.kv_namespaces]]
+binding = "MCP_SESSIONS"
+id = "8aa4da475e344c39818fc2dc721354fd"
+
+[env.development]
+name = "textarttools-mcp-dev"
+
+# Environment variables for development
+[env.development.vars]
+ENVIRONMENT = "development"
+CORS_ORIGIN = "*"
+RATE_LIMIT_PER_MINUTE = "100"
+MAX_TEXT_LENGTH = "10000"
+
+# KV namespaces for development
+[[env.development.kv_namespaces]]
+binding = "MCP_SESSIONS"
+preview_id = "7b6cceb7f62f49abb89f9decdeac9bdb"
 
 # Secrets to be set with `wrangler secret put <name>`
 # GITHUB_CLIENT_ID = "your_github_oauth_client_id"
@@ -30,12 +50,6 @@ MAX_TEXT_LENGTH = "10000"
 # [[analytics_engine_datasets]]
 # binding = "MCP_ANALYTICS"
 # dataset = "textarttools_mcp_usage"
-
-# KV namespaces for session storage (configure these with actual IDs for deployment)
-# [[kv_namespaces]]
-# binding = "MCP_SESSIONS"
-# id = "your_kv_namespace_id_here"
-# preview_id = "your_preview_kv_namespace_id_here"
 
 # Durable Objects (if needed for advanced session management)
 # [[durable_objects.bindings]]
@@ -53,6 +67,6 @@ watch_dir = "src"
 port = 8788
 local_protocol = "http"
 
-# Limits
-[limits]
-cpu_ms = 30000
+# Limits (only available on paid plans)
+# [limits]
+# cpu_ms = 30000
