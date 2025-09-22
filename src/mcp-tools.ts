@@ -10,7 +10,12 @@ import type {
   PreviewStylesParams,
   PreviewStylesResult,
   GetStyleInfoParams,
-  GetStyleInfoResult
+  GetStyleInfoResult,
+  AsciiArtParams,
+  AsciiArtResult,
+  ListFigletFontsResult,
+  PreviewFigletFontsParams,
+  PreviewFigletFontsResult
 } from './types.js';
 
 import {
@@ -19,6 +24,12 @@ import {
   getStyleInfo,
   isValidStyle
 } from './text-styler.js';
+
+import {
+  generateAsciiArt,
+  getFigletFontDefinitions,
+  isValidFont
+} from './figlet-engine.js';
 
 /**
  * MCP Tool: unicode_style_text
@@ -142,10 +153,147 @@ export async function handleGetStyleInfo(params: GetStyleInfoParams): Promise<Ge
 }
 
 /**
- * Handle MCP tool calls
+ * MCP Tool: ascii_art_text
+ * Generate ASCII art using figlet fonts with R2 storage
  */
-export async function handleToolCall(toolName: string, args: any): Promise<any> {
+export async function handleAsciiArt(params: AsciiArtParams, r2Bucket: R2Bucket): Promise<AsciiArtResult> {
+  const { text, font, preserve_spacing = true } = params;
+  const startTime = Date.now();
+
+  // Basic validation
+  if (!text || typeof text !== 'string') {
+    throw new Error('Text parameter is required and must be a string');
+  }
+
+  if (!font || typeof font !== 'string') {
+    throw new Error('Font parameter is required and must be a string');
+  }
+
+  if (!r2Bucket) {
+    throw new Error('R2 bucket is required for ASCII art generation');
+  }
+
+  // Validate font exists in R2
+  const fontExists = await isValidFont(font, r2Bucket);
+  if (!fontExists) {
+    throw new Error(`Font not found in R2: ${font}`);
+  }
+
+  if (text.length > 100) {
+    throw new Error('Text too long for ASCII art. Maximum length is 100 characters');
+  }
+
+  try {
+    const ascii_art = await generateAsciiArt(text, font, preserve_spacing, r2Bucket);
+    const lines = ascii_art.split('\n');
+    const processingTime = Date.now() - startTime;
+
+    return {
+      ascii_art,
+      font_applied: font as any,
+      character_count: text.length,
+      line_count: lines.length,
+      processing_time_ms: processingTime
+    };
+  } catch (error) {
+    throw new Error(`ASCII art generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+/**
+ * MCP Tool: list_figlet_fonts
+ * Get all available figlet fonts with examples and metadata
+ */
+export async function handleListFigletFonts(r2Bucket: R2Bucket): Promise<ListFigletFontsResult> {
+  if (!r2Bucket) {
+    throw new Error('R2 bucket is required for listing figlet fonts');
+  }
+
+  try {
+    const fontDefinitions = await getFigletFontDefinitions(r2Bucket);
+    const totalCount = fontDefinitions.length;
+    const bundledCount = 0; // All fonts are from R2, none are bundled
+
+    return {
+      fonts: fontDefinitions,
+      total_count: totalCount,
+      bundled_count: bundledCount
+    };
+  } catch (error) {
+    throw new Error(`Failed to list figlet fonts: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+/**
+ * MCP Tool: preview_figlet_fonts
+ * Show sample text in multiple figlet fonts for comparison
+ */
+export async function handlePreviewFigletFonts(params: PreviewFigletFontsParams, r2Bucket: R2Bucket): Promise<PreviewFigletFontsResult> {
+  const { text, fonts } = params;
+
+  if (!r2Bucket) {
+    throw new Error('R2 bucket is required for font previews');
+  }
+
+  // Basic validation
+  if (!text || typeof text !== 'string') {
+    throw new Error('Text parameter is required and must be a string');
+  }
+
+  if (text.length > 20) {
+    throw new Error('Preview text too long. Maximum length is 20 characters for font previews');
+  }
+
+  try {
+    // Get fonts to preview - either specified or from R2
+    let fontsToPreview: string[];
+    if (fonts && fonts.length > 0) {
+      fontsToPreview = fonts;
+    } else {
+      const fontDefinitions = await getFigletFontDefinitions(r2Bucket);
+      fontsToPreview = fontDefinitions.slice(0, 10).map(f => f.font); // Limit to first 10 for performance
+    }
+
+    const previews = [];
+    const fontDefinitions = await getFigletFontDefinitions(r2Bucket);
+
+    for (const fontName of fontsToPreview) {
+      // Validate font exists in R2
+      const fontExists = await isValidFont(fontName, r2Bucket);
+      if (!fontExists) {
+        continue; // Skip fonts not in R2
+      }
+
+      try {
+        const ascii_art = await generateAsciiArt(text, fontName, true, r2Bucket);
+        const fontInfo = fontDefinitions.find(f => f.font === fontName);
+
+        previews.push({
+          font: fontName as any,
+          ascii_art,
+          suitable_for: fontInfo?.suitableFor || []
+        });
+      } catch (error) {
+        // Skip fonts that fail to generate
+        console.warn(`Failed to preview font ${fontName}:`, error);
+        continue;
+      }
+    }
+
+    return {
+      previews
+    };
+  } catch (error) {
+    throw new Error(`Failed to preview figlet fonts: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+/**
+ * Handle MCP tool calls with R2 bucket support
+ */
+export async function handleToolCall(toolName: string, args: any, r2Bucket?: R2Bucket): Promise<any> {
   switch (toolName) {
+    // Unicode styling tools
     case 'unicode_style_text':
       return await handleStyleText(args);
 
@@ -158,6 +306,25 @@ export async function handleToolCall(toolName: string, args: any): Promise<any> 
     case 'get_style_info':
       return await handleGetStyleInfo(args);
 
+    // ASCII art tools (require R2 bucket)
+    case 'ascii_art_text':
+      if (!r2Bucket) {
+        throw new Error('R2 bucket is required for ASCII art generation');
+      }
+      return await handleAsciiArt(args, r2Bucket);
+
+    case 'list_figlet_fonts':
+      if (!r2Bucket) {
+        throw new Error('R2 bucket is required for listing figlet fonts');
+      }
+      return await handleListFigletFonts(r2Bucket);
+
+    case 'preview_figlet_fonts':
+      if (!r2Bucket) {
+        throw new Error('R2 bucket is required for font previews');
+      }
+      return await handlePreviewFigletFonts(args, r2Bucket);
+
     default:
       throw new Error(`Unknown tool: ${toolName}`);
   }
@@ -167,6 +334,7 @@ export async function handleToolCall(toolName: string, args: any): Promise<any> 
  * MCP Tool Definitions
  */
 export const mcpToolDefinitions = [
+  // Unicode styling tools
   {
     name: 'unicode_style_text',
     description: 'Transform text using Unicode styling (bold, italic, fraktur, etc.)',
@@ -240,6 +408,62 @@ export const mcpToolDefinitions = [
         }
       },
       required: ['style']
+    }
+  },
+
+  // ASCII art tools
+  {
+    name: 'ascii_art_text',
+    description: 'Generate ASCII art using figlet fonts',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        text: {
+          type: 'string',
+          description: 'The text to convert to ASCII art',
+          maxLength: 100
+        },
+        font: {
+          type: 'string',
+          description: 'The figlet font to use (use list_figlet_fonts to see all available options)'
+        },
+        preserve_spacing: {
+          type: 'boolean',
+          description: 'Whether to preserve original spacing',
+          default: true
+        }
+      },
+      required: ['text', 'font']
+    }
+  },
+  {
+    name: 'list_figlet_fonts',
+    description: 'Get a list of all available figlet fonts with examples',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+      additionalProperties: false
+    }
+  },
+  {
+    name: 'preview_figlet_fonts',
+    description: 'Preview text in multiple figlet fonts for comparison',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        text: {
+          type: 'string',
+          description: 'The text to preview (max 20 characters)',
+          maxLength: 20
+        },
+        fonts: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Specific fonts to include (optional, defaults to all)',
+          default: []
+        }
+      },
+      required: ['text']
     }
   }
 ];

@@ -30,15 +30,18 @@ A production-ready Model Context Protocol (MCP) server providing Unicode text st
    ```
 
 3. **Start using it immediately**:
+   - ASCII art with 322+ figlet fonts
    - All 23 Unicode styles available
    - 100 requests per minute
    - No authentication required
 
 ## Features
 
+- **✅ ASCII Art Generation**: 322+ figlet fonts for large ASCII text art
 - **✅ 23 Unicode Text Styles**: Bold, italic, cursive, fraktur, zalgo, circled, squared, and more
 - **✅ Full MCP Protocol**: JSON-RPC 2.0 with Server-Sent Events, Resources API, Prompts API
 - **✅ Live Deployment**: Production server at `mcp.textarttools.com`
+- **✅ R2 Storage Integration**: Figlet fonts served from Cloudflare R2 bucket
 - **✅ Security Headers**: CSP, HSTS, X-Frame-Options, and security controls
 - **✅ Rate Limiting**: 100 requests/minute with KV-based tracking
 - **✅ Analytics Ready**: Cloudflare Analytics Engine integration
@@ -52,12 +55,28 @@ A production-ready Model Context Protocol (MCP) server providing Unicode text st
 Test the live server directly:
 
 ```bash
-# Transform text to bold style
+# Generate ASCII art
 curl -X POST https://mcp.textarttools.com/sse \
   -H "Content-Type: application/json" \
   -d '{
     "jsonrpc": "2.0",
     "id": 1,
+    "method": "tools/call",
+    "params": {
+      "name": "ascii_art_text",
+      "arguments": {
+        "text": "Hello",
+        "font": "Big"
+      }
+    }
+  }'
+
+# Transform text to bold style
+curl -X POST https://mcp.textarttools.com/sse \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 2,
     "method": "tools/call",
     "params": {
       "name": "unicode_style_text",
@@ -68,15 +87,15 @@ curl -X POST https://mcp.textarttools.com/sse \
     }
   }'
 
-# List all available styles
+# List all available figlet fonts
 curl -X POST https://mcp.textarttools.com/sse \
   -H "Content-Type: application/json" \
   -d '{
     "jsonrpc": "2.0",
-    "id": 2,
+    "id": 3,
     "method": "tools/call",
     "params": {
-      "name": "list_available_styles",
+      "name": "list_figlet_fonts",
       "arguments": {}
     }
   }'
@@ -88,7 +107,40 @@ Visit `https://mcp.textarttools.com/` for comprehensive API documentation design
 
 ## MCP Tools Available
 
-The server provides 4 MCP tools for text styling:
+The server provides 7 MCP tools for comprehensive text transformation:
+
+### ASCII Art Generation (3 tools)
+
+### 1. `ascii_art_text`
+Generate ASCII art from text using figlet fonts.
+
+**Parameters:**
+- `text` (string): The text to convert to ASCII art (max 100 characters)
+- `font` (string): The figlet font name (e.g., "Standard", "Big", "Banner")
+- `preserve_spacing` (boolean, optional): Preserve original spacing (default: true)
+
+**Returns:**
+- `ascii_art` (string): The generated ASCII art
+- `font_used` (string): The font that was applied
+- `dimensions` (object): Width and height of the ASCII art
+- `character_count` (number): Number of characters processed
+
+### 2. `list_figlet_fonts`
+Get all available figlet fonts from the R2 bucket.
+
+**Parameters:** None
+**Returns:** Array of available font names with metadata
+
+### 3. `preview_figlet_fonts`
+Preview text in multiple figlet fonts for comparison.
+
+**Parameters:**
+- `text` (string): Text to preview (max 20 characters)
+- `fonts` (array, optional): Specific fonts to include in preview
+
+**Returns:** Array of ASCII art previews in different fonts
+
+### Unicode Text Styling (4 tools)
 
 ### 1. `unicode_style_text`
 Transform text using any of the 23 Unicode styles.
@@ -149,6 +201,59 @@ Get detailed information about a specific style.
 21. **italicSerif** - 𝐼𝑡𝑎𝑙𝑖𝑐 𝑆𝑒𝑟𝑖𝑓
 22. **boldItalicSerif** - 𝑩𝒐𝒍𝒅 𝑰𝒕𝒂𝒍𝒊𝒄 𝑺𝒆𝒓𝒊𝒇
 23. **boldFraktur** - 𝕭𝖔𝖑𝖉 𝕱𝖗𝖆𝖐
+
+## 🎯 MCP Prompts & Resources (NEW!)
+
+**✨ Major Update**: Streamlined MCP guidance for better AI model integration
+
+### 📋 Tool-Focused Prompts (7 available)
+
+Our prompts now provide **direct tool workflows** instead of verbose explanations:
+
+**Unicode Styling Prompts:**
+- `unicode-style-workflow` → "list_available_styles → preview_styles → unicode_style_text"
+- `unicode-bulk-styling` → "Repeat unicode_style_text for multiple texts"
+- `unicode-compatibility-check` → "Use get_style_info for platform compatibility"
+- `unicode-troubleshooting` → "Use get_style_info → preview_styles"
+
+**ASCII Art Prompts:**
+- `ascii-art-workflow` → "list_figlet_fonts → preview_figlet_fonts → ascii_art_text"
+- `ascii-font-selection` → "Use preview_figlet_fonts to compare fonts"
+- `ascii-art-troubleshooting` → "Use list_figlet_fonts → preview_figlet_fonts"
+
+### 📚 Essential Resources (5 available)
+
+Focused resources that complement tools without duplicating functionality:
+
+1. **`textarttools://character-mappings`** - Unicode transformation tables
+2. **`textarttools://platform-compatibility`** - Style support across platforms
+3. **`textarttools://figlet-font-definitions`** - ASCII art font metadata
+4. **`textarttools://ascii-art-usage`** - Tool workflow guidance
+5. **`textarttools://request-examples`** - **Correct JSON-RPC 2.0 format examples** ⭐
+
+### 🚀 Key Improvements
+
+**Before:** Verbose essay-style prompts that confused AI models
+**After:** Direct tool workflows that guide step-by-step usage
+
+**Before:** Redundant resources that duplicated tool functionality
+**After:** Essential reference data that supports tool usage
+
+**NEW:** Complete request format examples prevent JSON-RPC errors
+
+### 📖 Usage Examples
+
+```bash
+# Get tool-focused prompts
+curl -X POST https://mcp.textarttools.com/sse \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"prompts/list"}'
+
+# Get correct request format examples
+curl -X POST https://mcp.textarttools.com/sse \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":2,"method":"resources/read","params":{"uri":"textarttools://request-examples"}}'
+```
 
 ## Local Development (Optional)
 

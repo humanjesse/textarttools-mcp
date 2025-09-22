@@ -30,6 +30,11 @@ CSP_REPORT_ENDPOINT = "/csp-report"
 binding = "MCP_SESSIONS"
 id = "8aa4da475e344c39818fc2dc721354fd"
 
+# R2 bucket for figlet fonts
+[[env.production.r2_buckets]]
+binding = "FIGLET_FONTS"
+bucket_name = "textarttools-figlet-fonts"
+
 [env.development]
 name = "textarttools-mcp-dev"
 
@@ -47,6 +52,11 @@ SECURITY_LEVEL = "permissive"
 [[env.development.kv_namespaces]]
 binding = "MCP_SESSIONS"
 preview_id = "7b6cceb7f62f49abb89f9decdeac9bdb"
+
+# R2 bucket for figlet fonts (development)
+[[env.development.r2_buckets]]
+binding = "FIGLET_FONTS"
+bucket_name = "textarttools-figlet-fonts"
 
 # Secrets to be set with `wrangler secret put <name>`
 # GITHUB_CLIENT_ID = "your_github_oauth_client_id"

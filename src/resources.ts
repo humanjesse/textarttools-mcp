@@ -822,104 +822,479 @@ export function getPlatformCompatibility() {
 }
 
 /**
- * Generate Style Selector Prompt
+ * Generate Unicode Style Workflow Prompt
  */
-export function generateStyleSelectorPrompt(args: any): string {
+export function generateUnicodeStyleWorkflowPrompt(args: any): string {
   const { text, context } = args;
 
-  return `I need help choosing the best Unicode text style for my text. Here's the information:
+  return `To style "${text}" with Unicode:
 
-Text to style: "${text}"
-Context/Usage: ${context || 'General use'}
+1. Call list_available_styles to see all 23 options
+2. Call preview_styles with your text to compare styles
+3. Call unicode_style_text with chosen style to transform
 
-Please analyze my text and recommend the most appropriate Unicode text style from these 23 options:
-- Basic: normal, bold, italic, boldItalic, underline, strikethrough
-- Mathematical: fraktur, doubleStruck, monospace, cursive, subscript, superscript
-- Enclosed: circled, squared, parenthesized, negativeCircled
-- Special: flipped, zalgo, blue (regional indicators)
-- Serif variants: boldSerif, italicSerif, boldItalicSerif, boldFraktur
+${context ? `Context: ${context}` : ''}
 
-Consider:
-1. Readability and accessibility
-2. Platform compatibility for the intended use
-3. Appropriateness for the context
-4. Character support (the text contains: ${text.length} characters)
-
-Provide your recommendation with reasoning, and show me how the text would look in that style.`;
+Tools to use: list_available_styles → preview_styles → unicode_style_text`;
 }
 
 /**
- * Generate Bulk Processor Prompt
+ * Generate Unicode Bulk Styling Prompt
  */
-export function generateBulkProcessorPrompt(args: any): string {
+export function generateUnicodeBulkStylingPrompt(args: any): string {
   const { texts, style } = args;
   const textArray = Array.isArray(texts) ? texts : [texts];
 
-  return `I want to apply the "${style}" Unicode text style to multiple texts efficiently. Here are the texts:
+  return `To apply "${style}" to ${textArray.length} texts:
 
-${textArray.map((text, i) => `${i + 1}. "${text}"`).join('\n')}
+Call unicode_style_text once for each text:
+${textArray.map((text, i) => `${i + 1}. unicode_style_text(text: "${text}", style: "${style}")`).join('\n')}
 
-Please:
-1. Transform all ${textArray.length} texts using the "${style}" style
-2. Verify the style is appropriate for all texts
-3. Check for any character support issues
-4. Provide the transformed results in a numbered list
-5. Mention any texts that might have issues with this style
-
-Style to apply: ${style}
-Total texts: ${textArray.length}`;
+Tool to use: unicode_style_text (repeat for each text)`;
 }
 
 /**
- * Generate Compatibility Checker Prompt
+ * Generate Unicode Compatibility Check Prompt
  */
-export function generateCompatibilityCheckerPrompt(args: any): string {
+export function generateUnicodeCompatibilityCheckPrompt(args: any): string {
   const { text, style, platform } = args;
 
-  return `I need to check if my styled text will display correctly on a specific platform.
+  return `To check "${style}" compatibility for "${text}" on ${platform}:
 
-Text: "${text}"
-Style: ${style}
-Target Platform: ${platform}
+Call get_style_info with style: "${style}" to see:
+- Platform compatibility ratings
+- Character support details
+- Alternative style suggestions
 
-Please analyze:
-1. Unicode style compatibility with ${platform}
-2. Character support for the "${style}" style
-3. Potential display issues on ${platform}
-4. Alternative styles if there are compatibility problems
-5. Best practices for ${platform}
-
-Show me:
-- How the text would look: [styled version]
-- Compatibility rating (excellent/good/fair/poor)
-- Any warnings or recommendations
-- Alternative styles if needed`;
+Tool to use: get_style_info`;
 }
 
 /**
- * Generate Style Combiner Prompt
+ * Generate Unicode Troubleshooting Prompt
  */
-export function generateStyleCombinerPrompt(args: any): string {
-  const { text, primary_style, secondary_effects } = args;
+export function generateUnicodeTroubleshootingPrompt(args: any): string {
+  const { text, style, error } = args;
 
-  return `I want to combine multiple Unicode styling effects on my text intelligently.
+  return `If unicode_style_text failed for "${text}" with style "${style}":
 
-Text: "${text}"
-Primary Style: ${primary_style}
-Secondary Effects: ${secondary_effects || 'To be determined'}
+1. Call get_style_info with style: "${style}" to check:
+   - Character support limitations
+   - Platform compatibility issues
+2. Try preview_styles to see if other styles work
+3. Check if text length exceeds limits
 
-Please help me:
-1. Apply the primary "${primary_style}" style as the base
-2. ${secondary_effects ? `Add these secondary effects: ${secondary_effects}` : 'Suggest compatible secondary effects'}
-3. Ensure the combination is readable and visually appealing
-4. Check for any conflicts between effects
-5. Provide platform compatibility information
+${error ? `Error encountered: ${error}` : ''}
 
-Consider:
-- Which effects can be safely combined
-- Readability impact of layered effects
-- Platform support for combined styles
-- Alternative approaches if direct combination isn't possible
+Tools to use: get_style_info → preview_styles`;
+}
 
-Show the result and explain your styling choices.`;
+/**
+ * Figlet Font Definitions Resource
+ * R2-based figlet font metadata and information
+ */
+export async function getFigletFontDefinitions(r2Bucket: R2Bucket) {
+  try {
+    // Import here to avoid circular dependencies
+    const { getFigletFontDefinitions: getDefinitions } = await import('./figlet-engine.js');
+    const definitions = await getDefinitions(r2Bucket);
+
+    return {
+      version: '1.0.0',
+      description: 'ASCII art font definitions loaded from R2 storage',
+      totalFonts: definitions.length,
+      source: 'R2 Bucket (textarttools-figlet-fonts)',
+      fonts: definitions,
+      categories: {
+        popular: definitions.filter(f => f.category === 'popular'),
+        decorative: definitions.filter(f => f.category === 'decorative'),
+        '3d': definitions.filter(f => f.category === '3d'),
+        outline: definitions.filter(f => f.category === 'outline')
+      }
+    };
+  } catch (error) {
+    return {
+      version: '1.0.0',
+      description: 'Error loading figlet font definitions',
+      error: error instanceof Error ? error.message : 'Unknown error',
+      totalFonts: 0,
+      fonts: []
+    };
+  }
+}
+
+/**
+ * Figlet Font Character Mappings Resource
+ * Information about ASCII art character mapping
+ */
+export function getFigletCharacterMappings() {
+  return {
+    version: '1.0.0',
+    description: 'ASCII art character mapping information for figlet fonts',
+    format: 'Figlet Font (.flf)',
+    support: {
+      characters: 'ASCII printable characters (32-126)',
+      extended: 'Unicode characters (varies by font)',
+      specialCharacters: {
+        hardblank: 'Represents space in font definitions',
+        endmark: '@ or @@ marks end of character definition'
+      }
+    },
+    fontStructure: {
+      header: {
+        signature: 'flf2a format identifier',
+        hardblank: 'Character used to represent spaces',
+        height: 'Height of characters in lines',
+        baseline: 'Baseline position',
+        maxLength: 'Maximum character width',
+        oldLayout: 'Legacy layout settings',
+        commentLines: 'Number of comment lines after header'
+      },
+      characters: {
+        standard: 'Characters 32-126 (space through tilde)',
+        extended: 'Additional Unicode characters if present',
+        definition: 'Each character defined by height number of lines'
+      }
+    },
+    categories: {
+      standard: {
+        description: 'Basic readable fonts for general use',
+        examples: ['Standard', 'Big', 'Small', 'Slant'],
+        characteristics: ['Good readability', 'Wide platform support', 'Compact size']
+      },
+      decorative: {
+        description: 'Stylized fonts for visual impact',
+        examples: ['Bubble', 'Shadow', 'Graffiti', 'Broadway'],
+        characteristics: ['High visual impact', 'Larger size', 'Artistic style']
+      },
+      geometric: {
+        description: 'Fonts based on geometric shapes',
+        examples: ['Block', 'Digital', 'Isometric1', 'Lean'],
+        characteristics: ['Clean lines', 'Technical appearance', 'Good for logos']
+      },
+      script: {
+        description: 'Cursive and handwriting-style fonts',
+        examples: ['Script', 'Cursive', 'Calligraphy'],
+        characteristics: ['Flowing style', 'Elegant appearance', 'Personal touch']
+      }
+    },
+    usage: {
+      headers: {
+        description: 'Large text for titles and banners',
+        recommendedFonts: ['Big', 'Banner', 'Block', 'Slant'],
+        maxLength: 'Keep under 20 characters for readability'
+      },
+      logos: {
+        description: 'Brand and identity text',
+        recommendedFonts: ['3D-ASCII', 'Shadow', 'Graffiti', 'Broadway'],
+        considerations: ['Platform compatibility', 'Size limitations', 'Character support']
+      },
+      documentation: {
+        description: 'Code comments and technical docs',
+        recommendedFonts: ['Small', 'Standard', 'Lean', 'Term'],
+        considerations: ['Readability', 'Monospace compatibility', 'Size efficiency']
+      },
+      artistic: {
+        description: 'Creative and decorative projects',
+        recommendedFonts: ['Bubble', 'Graffiti', 'Gothic', 'Poison'],
+        considerations: ['Visual impact', 'Theme matching', 'Audience appropriateness']
+      }
+    },
+    bestPractices: {
+      performance: [
+        'Fonts are cached per request for efficiency',
+        'R2 storage provides global edge caching',
+        'Popular fonts load faster due to caching patterns'
+      ],
+      compatibility: [
+        'All fonts support basic ASCII characters (32-126)',
+        'Extended Unicode support varies by font',
+        'Test on target platform before deployment'
+      ],
+      accessibility: [
+        'ASCII art is not screen-reader friendly',
+        'Provide alt text or plain text alternatives',
+        'Consider context and audience accessibility needs'
+      ]
+    }
+  };
+}
+
+/**
+ * Generate ASCII Art Workflow Prompt
+ */
+export function generateAsciiArtWorkflowPrompt(args: any): string {
+  const { text, context, maxWidth } = args;
+
+  return `To create ASCII art for "${text}":
+
+1. Call list_figlet_fonts to see all 322+ font options
+2. Call preview_figlet_fonts with your text to compare fonts
+3. Call ascii_art_text with chosen font to generate
+
+${context ? `Context: ${context}` : ''}
+${maxWidth ? `Max Width: ${maxWidth}` : ''}
+
+Tools to use: list_figlet_fonts → preview_figlet_fonts → ascii_art_text`;
+}
+
+/**
+ * Generate ASCII Font Selection Prompt
+ */
+export function generateAsciiFontSelectionPrompt(args: any): string {
+  const { text, category, count } = args;
+  const previewCount = count || 5;
+
+  return `To compare ${previewCount} fonts for "${text}":
+
+Call preview_figlet_fonts with:
+- text: "${text}"
+- fonts: [list of ${previewCount} fonts${category ? ` from ${category} category` : ''}]
+
+This shows actual ASCII art output for each font to help you choose.
+
+Tool to use: preview_figlet_fonts`;
+}
+
+/**
+ * Generate ASCII Art Troubleshooting Prompt
+ */
+export function generateAsciiArtTroubleshootingPrompt(args: any): string {
+  const { text, font, error } = args;
+
+  return `If ascii_art_text failed for "${text}" with font "${font}":
+
+1. Call list_figlet_fonts to verify font name exists
+2. Check if text contains unsupported characters
+3. Try a different font from list_figlet_fonts
+4. Use preview_figlet_fonts to test alternatives
+
+${error ? `Error encountered: ${error}` : ''}
+
+Tools to use: list_figlet_fonts → preview_figlet_fonts`;
+}
+
+/**
+ * ASCII Art Usage Resource
+ * Practical guidance for using ASCII art tools effectively
+ */
+export function getAsciiArtUsage() {
+  return {
+    version: '1.0.0',
+    description: 'Practical guidance for ASCII art generation with figlet fonts',
+    workflow: {
+      basic: [
+        '1. Use list_figlet_fonts to see available fonts',
+        '2. Use preview_figlet_fonts to compare fonts with your text',
+        '3. Use ascii_art_text to generate final ASCII art'
+      ],
+      troubleshooting: [
+        'If ascii_art_text fails, check font name with list_figlet_fonts',
+        'Try shorter text if output is too wide',
+        'Use preview_figlet_fonts to test alternatives'
+      ]
+    },
+    bestPractices: {
+      textLength: 'Keep text under 20 characters for best readability',
+      fontSelection: 'Use preview_figlet_fonts to compare before choosing',
+      compatibility: 'ASCII art works best in monospace environments',
+      performance: 'Fonts are cached per request for efficiency'
+    },
+    toolMapping: {
+      'list_figlet_fonts': 'See all 322+ available fonts with metadata',
+      'preview_figlet_fonts': 'Compare how text looks in multiple fonts',
+      'ascii_art_text': 'Generate final ASCII art with chosen font'
+    },
+    categories: {
+      popular: 'Standard, Big, Slant, Banner - good for general use',
+      decorative: 'Bubble, Shadow, Graffiti - high visual impact',
+      '3d': '3D-ASCII, Isometric1 - dimensional effects',
+      technical: 'Digital, Binary - tech/code themes'
+    }
+  };
+}
+
+/**
+ * MCP Request Examples Resource
+ * Correct JSON-RPC 2.0 request format examples for all tools
+ */
+export function getMcpRequestExamples() {
+  return {
+    version: '1.0.0',
+    description: 'Correct MCP JSON-RPC 2.0 request format examples',
+    endpoint: 'POST /sse (Content-Type: application/json)',
+
+    unicodeExamples: {
+      'unicode_style_text': {
+        description: 'Transform text with Unicode styling',
+        request: {
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'tools/call',
+          params: {
+            name: 'unicode_style_text',
+            arguments: {
+              text: 'Hello World',
+              style: 'bold'
+            }
+          }
+        }
+      },
+      'list_available_styles': {
+        description: 'Get all 23 available Unicode styles',
+        request: {
+          jsonrpc: '2.0',
+          id: 2,
+          method: 'tools/call',
+          params: {
+            name: 'list_available_styles',
+            arguments: {}
+          }
+        }
+      },
+      'preview_styles': {
+        description: 'Preview text in multiple styles',
+        request: {
+          jsonrpc: '2.0',
+          id: 3,
+          method: 'tools/call',
+          params: {
+            name: 'preview_styles',
+            arguments: {
+              text: 'Hello',
+              styles: ['bold', 'italic', 'cursive']
+            }
+          }
+        }
+      },
+      'get_style_info': {
+        description: 'Get detailed info about a specific style',
+        request: {
+          jsonrpc: '2.0',
+          id: 4,
+          method: 'tools/call',
+          params: {
+            name: 'get_style_info',
+            arguments: {
+              style: 'bold'
+            }
+          }
+        }
+      }
+    },
+
+    asciiArtExamples: {
+      'ascii_art_text': {
+        description: 'Generate ASCII art with figlet fonts',
+        request: {
+          jsonrpc: '2.0',
+          id: 5,
+          method: 'tools/call',
+          params: {
+            name: 'ascii_art_text',
+            arguments: {
+              text: 'CODE',
+              font: 'Standard'
+            }
+          }
+        }
+      },
+      'list_figlet_fonts': {
+        description: 'Get all 322+ available ASCII art fonts',
+        request: {
+          jsonrpc: '2.0',
+          id: 6,
+          method: 'tools/call',
+          params: {
+            name: 'list_figlet_fonts',
+            arguments: {}
+          }
+        }
+      },
+      'preview_figlet_fonts': {
+        description: 'Preview text in multiple ASCII art fonts',
+        request: {
+          jsonrpc: '2.0',
+          id: 7,
+          method: 'tools/call',
+          params: {
+            name: 'preview_figlet_fonts',
+            arguments: {
+              text: 'Hi',
+              fonts: ['Standard', 'Big', 'Slant']
+            }
+          }
+        }
+      }
+    },
+
+    mcpProtocolExamples: {
+      'tools/list': {
+        description: 'List all available MCP tools',
+        request: {
+          jsonrpc: '2.0',
+          id: 8,
+          method: 'tools/list',
+          params: {}
+        }
+      },
+      'prompts/list': {
+        description: 'List all available prompts',
+        request: {
+          jsonrpc: '2.0',
+          id: 9,
+          method: 'prompts/list',
+          params: {}
+        }
+      },
+      'resources/list': {
+        description: 'List all available resources',
+        request: {
+          jsonrpc: '2.0',
+          id: 10,
+          method: 'resources/list',
+          params: {}
+        }
+      }
+    },
+
+    curlExamples: {
+      unicode_style_text: `curl -X POST https://mcp.textarttools.com/sse \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "tools/call",
+    "params": {
+      "name": "unicode_style_text",
+      "arguments": {
+        "text": "Hello World",
+        "style": "bold"
+      }
+    }
+  }'`,
+
+      ascii_art_text: `curl -X POST https://mcp.textarttools.com/sse \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 2,
+    "method": "tools/call",
+    "params": {
+      "name": "ascii_art_text",
+      "arguments": {
+        "text": "CODE",
+        "font": "Standard"
+      }
+    }
+  }'`
+    },
+
+    commonMistakes: {
+      missingContentType: 'Always include -H "Content-Type: application/json"',
+      wrongMethod: 'Use POST, not GET',
+      invalidJson: 'Ensure JSON is properly formatted with correct quotes',
+      missingId: 'Every request needs a unique "id" field',
+      wrongEndpoint: 'Use /sse endpoint, not /api or /'
+    }
+  };
 }

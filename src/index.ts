@@ -11,14 +11,18 @@ import { mcpToolDefinitions, handleToolCall } from './mcp-tools.js';
 import { GitHubOAuth, RateLimiter, getClientIP, getCorsHeaders } from './auth.js';
 import { SecurityHeaders } from './security/security-headers.js';
 import {
-  getStyleDefinitions,
   getCharacterMappings,
-  getUsageExamples,
   getPlatformCompatibility,
-  generateStyleSelectorPrompt,
-  generateBulkProcessorPrompt,
-  generateCompatibilityCheckerPrompt,
-  generateStyleCombinerPrompt
+  getAsciiArtUsage,
+  getFigletCharacterMappings,
+  getMcpRequestExamples,
+  generateUnicodeStyleWorkflowPrompt,
+  generateUnicodeBulkStylingPrompt,
+  generateUnicodeCompatibilityCheckPrompt,
+  generateUnicodeTroubleshootingPrompt,
+  generateAsciiArtWorkflowPrompt,
+  generateAsciiFontSelectionPrompt,
+  generateAsciiArtTroubleshootingPrompt
 } from './resources.js';
 
 export default {
@@ -150,7 +154,7 @@ async function handleSSE(request: Request, env: Env, corsHeaders: HeadersInit, s
         break;
 
       case 'tools/call':
-        response = await handleToolsCall(jsonrpcRequest);
+        response = await handleToolsCall(jsonrpcRequest, env);
         break;
 
       case 'resources/list':
@@ -265,25 +269,43 @@ async function handleAuth(request: Request, env: Env, corsHeaders: HeadersInit, 
 function handleApiDocs(corsHeaders: HeadersInit, securityHeaders: SecurityHeaders, requestId: string): Response {
   const apiDocs = {
     name: 'TextArtTools MCP Server',
-    description: 'Unicode text styling API using Model Context Protocol (MCP)',
-    version: '1.0.0',
+    description: 'Unicode text styling and ASCII art generation API using Model Context Protocol (MCP)',
+    version: '1.1.0',
     endpoints: {
       mcp: {
         url: '/sse',
         method: 'POST',
-        description: 'MCP JSON-RPC 2.0 endpoint for text styling',
+        description: 'MCP JSON-RPC 2.0 endpoint for text styling and ASCII art generation',
         content_type: 'application/json',
-        example_request: {
-          jsonrpc: '2.0',
-          id: 1,
-          method: 'tools/call',
-          params: {
-            name: 'unicode_style_text',
-            arguments: {
-              text: 'Hello World',
-              style: 'bold'
+        example_requests: {
+          unicode_styling: {
+            jsonrpc: '2.0',
+            id: 1,
+            method: 'tools/call',
+            params: {
+              name: 'unicode_style_text',
+              arguments: {
+                text: 'Hello World',
+                style: 'bold'
+              }
+            }
+          },
+          ascii_art: {
+            jsonrpc: '2.0',
+            id: 2,
+            method: 'tools/call',
+            params: {
+              name: 'ascii_art_text',
+              arguments: {
+                text: 'Hello',
+                font: 'Standard'
+              }
             }
           }
+        },
+        available_tools: {
+          unicode_tools: ['unicode_style_text', 'list_available_styles', 'preview_styles', 'get_style_info'],
+          ascii_tools: ['ascii_art_text', 'list_figlet_fonts', 'preview_figlet_fonts']
         },
         available_styles: [
           'normal', 'bold', 'italic', 'boldItalic', 'underline', 'strikethrough',
@@ -291,6 +313,9 @@ function handleApiDocs(corsHeaders: HeadersInit, securityHeaders: SecurityHeader
           'monospace', 'cursive', 'squared', 'flipped', 'zalgo', 'blue',
           'parenthesized', 'negativeCircled', 'boldSerif', 'italicSerif',
           'boldItalicSerif', 'boldFraktur'
+        ],
+        available_fonts: [
+          'Big', 'Standard', 'Slant', 'Banner', 'Block', 'Small', 'Bubble', '3D-ASCII'
         ]
       },
       health: {
@@ -303,8 +328,12 @@ function handleApiDocs(corsHeaders: HeadersInit, securityHeaders: SecurityHeader
       'Use POST method to /sse endpoint',
       'Set Content-Type: application/json header',
       'Send JSON-RPC 2.0 formatted requests',
-      'Use tools/call method with unicode_style_text tool',
-      'Specify text and style in arguments object'
+      'Use tools/call method with appropriate tool name',
+      'For Unicode styling: use unicode_style_text with text and style parameters',
+      'For ASCII art: use ascii_art_text with text and font parameters',
+      'Use list_available_styles to see Unicode options',
+      'Use list_figlet_fonts to see ASCII art font options',
+      'Use preview tools to compare multiple styles/fonts'
     ]
   };
 
@@ -327,6 +356,7 @@ function handleHealth(corsHeaders: HeadersInit, securityHeaders: SecurityHeaders
     version: '1.0.0',
     services: {
       textStyling: 'operational',
+      asciiArt: 'operational',
       mcp: 'operational'
     }
   };
@@ -373,9 +403,10 @@ function handleToolsList(request: any): any {
   };
 }
 
-async function handleToolsCall(request: any): Promise<any> {
+async function handleToolsCall(request: any, env: Env): Promise<any> {
   try {
-    const result = await handleToolCall(request.params.name, request.params.arguments);
+    // Pass R2 bucket to tool handler for figlet font loading
+    const result = await handleToolCall(request.params.name, request.params.arguments, env.FIGLET_FONTS);
 
     return {
       jsonrpc: '2.0',
@@ -401,27 +432,33 @@ function handleResourcesList(request: any): any {
     result: {
       resources: [
         {
-          uri: 'textarttools://style-definitions',
-          name: 'Style Definitions',
-          description: 'Complete metadata for all 23 Unicode text styles',
-          mimeType: 'application/json'
-        },
-        {
           uri: 'textarttools://character-mappings',
           name: 'Character Mappings',
           description: 'Unicode character mapping tables for text transformations',
           mimeType: 'application/json'
         },
         {
-          uri: 'textarttools://usage-examples',
-          name: 'Usage Examples',
-          description: 'Example text transformations for each style',
-          mimeType: 'application/json'
-        },
-        {
           uri: 'textarttools://platform-compatibility',
           name: 'Platform Compatibility',
           description: 'Platform compatibility matrix for Unicode styles',
+          mimeType: 'application/json'
+        },
+        {
+          uri: 'textarttools://figlet-font-definitions',
+          name: 'Figlet Font Definitions',
+          description: 'R2-based metadata for 322+ ASCII art fonts',
+          mimeType: 'application/json'
+        },
+        {
+          uri: 'textarttools://ascii-art-usage',
+          name: 'ASCII Art Usage',
+          description: 'Practical guidance for ASCII art tool workflows',
+          mimeType: 'application/json'
+        },
+        {
+          uri: 'textarttools://request-examples',
+          name: 'Request Examples',
+          description: 'Correct JSON-RPC 2.0 request format examples for all tools',
           mimeType: 'application/json'
         }
       ]
@@ -434,17 +471,20 @@ function handleResourcesRead(request: any): any {
 
   let content;
   switch (uri) {
-    case 'textarttools://style-definitions':
-      content = getStyleDefinitions();
-      break;
     case 'textarttools://character-mappings':
       content = getCharacterMappings();
       break;
-    case 'textarttools://usage-examples':
-      content = getUsageExamples();
-      break;
     case 'textarttools://platform-compatibility':
       content = getPlatformCompatibility();
+      break;
+    case 'textarttools://figlet-font-definitions':
+      content = getFigletCharacterMappings();
+      break;
+    case 'textarttools://ascii-art-usage':
+      content = getAsciiArtUsage();
+      break;
+    case 'textarttools://request-examples':
+      content = getMcpRequestExamples();
       break;
     default:
       return {
@@ -477,20 +517,32 @@ function handlePromptsList(request: any): any {
     result: {
       prompts: [
         {
-          name: 'style-selector',
-          description: 'Help users choose the right Unicode style for their text'
+          name: 'unicode-style-workflow',
+          description: 'Tool workflow: list_available_styles → preview_styles → unicode_style_text'
         },
         {
-          name: 'bulk-processor',
-          description: 'Guide users through bulk text processing operations'
+          name: 'unicode-bulk-styling',
+          description: 'Apply same style to multiple texts using unicode_style_text'
         },
         {
-          name: 'compatibility-checker',
-          description: 'Check platform compatibility for Unicode styles'
+          name: 'unicode-compatibility-check',
+          description: 'Check style compatibility using get_style_info'
         },
         {
-          name: 'style-combiner',
-          description: 'Combine multiple text styling techniques'
+          name: 'unicode-troubleshooting',
+          description: 'Fix unicode_style_text failures using get_style_info and preview_styles'
+        },
+        {
+          name: 'ascii-art-workflow',
+          description: 'Tool workflow: list_figlet_fonts → preview_figlet_fonts → ascii_art_text'
+        },
+        {
+          name: 'ascii-font-selection',
+          description: 'Compare fonts using preview_figlet_fonts'
+        },
+        {
+          name: 'ascii-art-troubleshooting',
+          description: 'Fix ascii_art_text failures using list_figlet_fonts and preview_figlet_fonts'
         }
       ]
     }
@@ -503,17 +555,26 @@ function handlePromptsGet(request: any): any {
 
   let promptText;
   switch (name) {
-    case 'style-selector':
-      promptText = generateStyleSelectorPrompt(args);
+    case 'unicode-style-workflow':
+      promptText = generateUnicodeStyleWorkflowPrompt(args);
       break;
-    case 'bulk-processor':
-      promptText = generateBulkProcessorPrompt(args);
+    case 'unicode-bulk-styling':
+      promptText = generateUnicodeBulkStylingPrompt(args);
       break;
-    case 'compatibility-checker':
-      promptText = generateCompatibilityCheckerPrompt(args);
+    case 'unicode-compatibility-check':
+      promptText = generateUnicodeCompatibilityCheckPrompt(args);
       break;
-    case 'style-combiner':
-      promptText = generateStyleCombinerPrompt(args);
+    case 'unicode-troubleshooting':
+      promptText = generateUnicodeTroubleshootingPrompt(args);
+      break;
+    case 'ascii-art-workflow':
+      promptText = generateAsciiArtWorkflowPrompt(args);
+      break;
+    case 'ascii-font-selection':
+      promptText = generateAsciiFontSelectionPrompt(args);
+      break;
+    case 'ascii-art-troubleshooting':
+      promptText = generateAsciiArtTroubleshootingPrompt(args);
       break;
     default:
       return {

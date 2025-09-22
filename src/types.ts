@@ -87,6 +87,70 @@ export interface GetStyleInfoResult {
   style_info: StyleDefinition;
 }
 
+// Figlet font types
+export type FigletFont =
+  | 'Big'
+  | 'Standard'
+  | 'Slant'
+  | 'Banner'
+  | 'Block'
+  | 'Small'
+  | 'Bubble'
+  | '3D-ASCII';
+
+// Parsed figlet font structure
+export interface ParsedFigletFont {
+  height: number;
+  baseline: number;
+  hardblank: string;
+  characters: Record<string, string[]>;
+}
+
+// Figlet font definition with metadata
+export interface FigletFontDefinition {
+  font: FigletFont;
+  displayName: string;
+  description: string;
+  example: string;
+  category: 'popular' | 'decorative' | '3d' | 'outline';
+  bundled: boolean;
+  suitableFor: string[];
+}
+
+// Figlet MCP Tool parameter types
+export interface AsciiArtParams {
+  text: string;
+  font: FigletFont;
+  preserve_spacing?: boolean;
+}
+
+export interface AsciiArtResult {
+  ascii_art: string;
+  font_applied: FigletFont;
+  character_count: number;
+  line_count: number;
+  processing_time_ms: number;
+}
+
+export interface ListFigletFontsResult {
+  fonts: FigletFontDefinition[];
+  total_count: number;
+  bundled_count: number;
+}
+
+export interface PreviewFigletFontsParams {
+  text: string;
+  fonts?: FigletFont[];
+}
+
+export interface PreviewFigletFontsResult {
+  previews: Array<{
+    font: FigletFont;
+    ascii_art: string;
+    suitable_for: string[];
+  }>;
+}
+
 // Environment and configuration types
 export interface Env {
   // Environment variables
@@ -105,6 +169,7 @@ export interface Env {
   // Cloudflare bindings (optional for development)
   MCP_SESSIONS?: KVNamespace;
   MCP_ANALYTICS?: AnalyticsEngineDataset;
+  FIGLET_FONTS?: R2Bucket;
 }
 
 // Authentication types

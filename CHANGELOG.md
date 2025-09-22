@@ -14,6 +14,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Monitoring and observability with OpenTelemetry
 - Performance optimizations and caching
 
+## [1.0.0] - 2025-09-22 - Streamlined MCP Prompts & Resources
+
+### Added
+- **🎯 Streamlined MCP Prompts (7 total)**
+  - Tool-focused prompts with direct workflow guidance
+  - Unicode styling prompts: workflow, bulk-styling, compatibility-check, troubleshooting
+  - ASCII art prompts: workflow, font-selection, troubleshooting
+  - Replaced verbose essay-style prompts with concise tool references
+
+- **📚 Essential MCP Resources (5 total)**
+  - New `request-examples` resource with correct JSON-RPC 2.0 format examples
+  - Complete figlet font support: `figlet-font-definitions` and `ascii-art-usage`
+  - Retained essential references: `character-mappings` and `platform-compatibility`
+
+- **🚀 Request Format Examples**
+  - Comprehensive JSON-RPC 2.0 examples for all 7 tools
+  - Curl command examples with proper escaping
+  - Common mistakes section to prevent formatting errors
+  - Both Unicode and ASCII art usage examples
+
+### Changed
+- **Major MCP Protocol Enhancement**: Prompts now directly reference tool workflows instead of providing abstract guidance
+- **Resource Optimization**: Removed redundant resources that duplicated tool functionality
+- **AI Model Integration**: Significantly improved usability for AI agents with clear, actionable prompts
+
+### Removed
+- Verbose prompt generators that confused AI models with essay-style responses
+- Redundant `style-definitions` resource (use `list_available_styles` tool instead)
+- Redundant `usage-examples` resource (use `preview_styles` tool instead)
+
+### Technical Details
+- Updated `handlePromptsList()` with 7 new streamlined prompts
+- Updated `handlePromptsGet()` with concise prompt generators
+- Updated `handleResourcesList()` and `handleResourcesRead()` for 5 focused resources
+- Added `getMcpRequestExamples()` function with comprehensive format examples
+- Maintained backward compatibility for all existing tools
+
 ## [0.3.0] - 2025-09-21 - Security Headers Implementation
 
 ### Added
