@@ -30,20 +30,22 @@ A production-ready Model Context Protocol (MCP) server providing Unicode text st
    ```
 
 3. **Start using it immediately**:
-   - ASCII art with 322+ figlet fonts
+   - Text banners with 322+ figlet fonts
    - All 23 Unicode styles available
    - 100 requests per minute
    - No authentication required
 
 ## Features
 
-- **✅ ASCII Art Generation**: 322+ figlet fonts for large ASCII text art
+- **✅ Text Banner Generation**: 322+ figlet fonts for large stylized text headers
 - **✅ 23 Unicode Text Styles**: Bold, italic, cursive, fraktur, zalgo, circled, squared, and more
 - **✅ Full MCP Protocol**: JSON-RPC 2.0 with Server-Sent Events, Resources API, Prompts API
 - **✅ Live Deployment**: Production server at `mcp.textarttools.com`
 - **✅ R2 Storage Integration**: Figlet fonts served from Cloudflare R2 bucket
-- **✅ Security Headers**: CSP, HSTS, X-Frame-Options, and security controls
-- **✅ Rate Limiting**: 100 requests/minute with KV-based tracking
+- **✅ Enhanced Security**: Input sanitization, XSS prevention, Unicode safety validation
+- **✅ Advanced Rate Limiting**: Burst protection (10 req/10s) + per-minute limits (100 req/min)
+- **✅ Security Monitoring**: Automated threat detection and security event logging
+- **✅ Security Headers**: CSP, HSTS, X-Frame-Options, and comprehensive web protection
 - **✅ Analytics Ready**: Cloudflare Analytics Engine integration
 - **✅ Global Performance**: Cloudflare Workers edge deployment
 - **✅ AI-Friendly**: API documentation endpoint for auto-discovery
@@ -55,7 +57,7 @@ A production-ready Model Context Protocol (MCP) server providing Unicode text st
 Test the live server directly:
 
 ```bash
-# Generate ASCII art
+# Generate text banners
 curl -X POST https://mcp.textarttools.com/sse \
   -H "Content-Type: application/json" \
   -d '{
@@ -109,20 +111,21 @@ Visit `https://mcp.textarttools.com/` for comprehensive API documentation design
 
 The server provides 7 MCP tools for comprehensive text transformation:
 
-### ASCII Art Generation (3 tools)
+### Text Banner Generation (3 tools)
+*Note: These tools create large stylized text (like website headers), not picture-style ASCII art*
 
 ### 1. `ascii_art_text`
-Generate ASCII art from text using figlet fonts.
+Generate large stylized text banners using figlet fonts.
 
 **Parameters:**
-- `text` (string): The text to convert to ASCII art (max 100 characters)
+- `text` (string): The text to convert to a stylized banner (max 100 characters)
 - `font` (string): The figlet font name (e.g., "Standard", "Big", "Banner")
 - `preserve_spacing` (boolean, optional): Preserve original spacing (default: true)
 
 **Returns:**
-- `ascii_art` (string): The generated ASCII art
+- `ascii_art` (string): The generated text banner
 - `font_used` (string): The font that was applied
-- `dimensions` (object): Width and height of the ASCII art
+- `dimensions` (object): Width and height of the text banner
 - `character_count` (number): Number of characters processed
 
 ### 2. `list_figlet_fonts`
@@ -138,7 +141,25 @@ Preview text in multiple figlet fonts for comparison.
 - `text` (string): Text to preview (max 20 characters)
 - `fonts` (array, optional): Specific fonts to include in preview
 
-**Returns:** Array of ASCII art previews in different fonts
+**Returns:** Array of text banner previews in different fonts
+
+### What Figlet Fonts Actually Create
+
+Figlet fonts create **large stylized text banners**, not pictures. Here's what the "Big" font produces for "Hello":
+
+```
+ _   _      _ _
+| | | | ___| | | ___
+| |_| |/ _ \ | |/ _ \
+|  _  |  __/ | | (_) |
+|_| |_|\___|_|_|\___/
+```
+
+This is ideal for:
+- Website headers
+- Terminal banners
+- Code documentation headers
+- Decorative text in applications
 
 ### Unicode Text Styling (4 tools)
 
@@ -227,7 +248,7 @@ Focused resources that complement tools without duplicating functionality:
 
 1. **`textarttools://character-mappings`** - Unicode transformation tables
 2. **`textarttools://platform-compatibility`** - Style support across platforms
-3. **`textarttools://figlet-font-definitions`** - ASCII art font metadata
+3. **`textarttools://figlet-font-definitions`** - Text banner font metadata
 4. **`textarttools://ascii-art-usage`** - Tool workflow guidance
 5. **`textarttools://request-examples`** - **Correct JSON-RPC 2.0 format examples** ⭐
 
@@ -316,23 +337,44 @@ docker-compose up build
 | `/health` | GET | Server health check |
 | `/auth/*` | Various | OAuth authentication (optional) |
 
+## Security
+
+### Current Security Implementation
+Our production server implements multiple layers of protection suitable for public free tools:
+
+**✅ Active Security Features:**
+- **Input Sanitization**: XSS prevention, malicious pattern detection
+- **Unicode Safety**: Homograph attack detection, direction override protection
+- **Rate Limiting**: Burst protection (10 req/10s) + per-minute limits (100 req/min)
+- **Security Headers**: CSP, HSTS, X-Frame-Options, comprehensive web protection
+- **Security Monitoring**: Automated threat detection and security event logging
+- **Cloudflare Protection**: Built-in DDoS protection and global edge security
+
+**🔒 Security Validations:**
+- Text length limits (10,000 chars for styling, 100 for text banners)
+- Zalgo complexity scoring to prevent rendering attacks
+- Font name validation with safe character restrictions
+- Automatic Unicode normalization and safety checks
+
+### Enterprise Security Available
+Advanced security features implemented but not currently active:
+- Request signing and validation with HMAC-SHA256
+- Comprehensive audit logging with tamper protection
+- Advanced authentication and authorization via GitHub OAuth
+- Secret rotation and management framework
+- Enterprise-grade threat detection and response
+
+**Risk Assessment**: Current security posture is **suitable for public free tools** with comprehensive protection against common web threats.
+
+See `SECURITY.md` for complete security documentation.
+
 ## Architecture
 
-### MVP Implementation
-- **Simple & Reliable**: Focused on core functionality
-- **Cloudflare Security**: Built-in DDoS protection and global performance
-- **Basic Rate Limiting**: KV-based request limiting
-- **No Authentication Required**: Public access for AI agents
-
-### Enterprise Features Available
-Advanced security and monitoring features are implemented but currently unused:
-- Content Security Policy (CSP) enforcement
-- Audit logging with tamper protection
-- Request signing and validation
-- Advanced authentication and authorization
-- Comprehensive monitoring and alerting
-
-See `SECURITY.md` for enterprise security documentation.
+### Production Implementation
+- **Enhanced Security**: Multi-layered protection with input validation and monitoring
+- **Cloudflare Workers**: Global edge deployment with built-in security
+- **Advanced Rate Limiting**: Burst protection + per-minute limits
+- **No Authentication Required**: Public access with comprehensive safety measures
 
 ## Links & Resources
 

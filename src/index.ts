@@ -5,24 +5,24 @@
  */
 
 import type { Env, AnalyticsEvent } from './types.js';
-import { RateLimitError } from './types.js';
 
 import { mcpToolDefinitions, handleToolCall } from './mcp-tools.js';
-import { GitHubOAuth, RateLimiter, getClientIP, getCorsHeaders } from './auth.js';
+import { GitHubOAuth, getClientIP, getCorsHeaders } from './auth.js';
+import { enhancedRateLimiter, securityLogger } from './basic-security.js';
 import { SecurityHeaders } from './security/security-headers.js';
 import {
   getCharacterMappings,
   getPlatformCompatibility,
-  getAsciiArtUsage,
-  getFigletCharacterMappings,
+  getTextBannerUsage,
+  getTextBannerCharacterMappings,
   getMcpRequestExamples,
   generateUnicodeStyleWorkflowPrompt,
   generateUnicodeBulkStylingPrompt,
   generateUnicodeCompatibilityCheckPrompt,
   generateUnicodeTroubleshootingPrompt,
-  generateAsciiArtWorkflowPrompt,
-  generateAsciiFontSelectionPrompt,
-  generateAsciiArtTroubleshootingPrompt
+  generateTextBannerWorkflowPrompt,
+  generateTextBannerFontSelectionPrompt,
+  generateTextBannerTroubleshootingPrompt
 } from './resources.js';
 
 export default {
@@ -99,13 +99,49 @@ export default {
 async function handleSSE(request: Request, env: Env, corsHeaders: HeadersInit, securityHeaders: SecurityHeaders, requestId: string): Promise<Response> {
   const clientIp = getClientIP(request);
 
-  // MVP: Basic rate limiting (simplified)
+  // Enhanced rate limiting with burst protection
   if (env.MCP_SESSIONS) {
     try {
-      const rateLimiter = new RateLimiter(env);
-      await rateLimiter.checkRateLimit(clientIp);
+      const rateResult = await enhancedRateLimiter.checkRateLimit(env.MCP_SESSIONS, clientIp);
+      if (!rateResult.allowed) {
+        securityLogger.logSecurityEvent({
+          type: 'RATE_LIMIT_EXCEEDED',
+          message: rateResult.error || 'Rate limit exceeded',
+          clientIp,
+          requestId,
+          timestamp: Date.now(),
+          details: {
+            remaining: rateResult.remaining,
+            resetTime: rateResult.resetTime,
+            userAgent: request.headers.get('User-Agent')
+          }
+        });
+
+        const errorResponse = {
+          jsonrpc: '2.0',
+          id: null,
+          error: {
+            code: -32005,
+            message: rateResult.error || 'Rate limit exceeded',
+            data: {
+              remaining: rateResult.remaining,
+              resetTime: rateResult.resetTime
+            }
+          }
+        };
+
+        return securityHeaders.createSecureResponse(JSON.stringify(errorResponse), {
+          status: 429,
+          headers: {
+            'Content-Type': 'application/json',
+            'Retry-After': Math.ceil((rateResult.resetTime - Date.now()) / 1000).toString(),
+            ...corsHeaders
+          }
+        }, requestId);
+      }
     } catch (error) {
-      throw new RateLimitError('Rate limit exceeded');
+      console.error('Rate limiting error:', error);
+      // Continue processing if rate limiting fails
     }
   }
 
@@ -154,7 +190,7 @@ async function handleSSE(request: Request, env: Env, corsHeaders: HeadersInit, s
         break;
 
       case 'tools/call':
-        response = await handleToolsCall(jsonrpcRequest, env);
+        response = await handleToolsCall(jsonrpcRequest, env, clientIp, requestId);
         break;
 
       case 'resources/list':
@@ -290,7 +326,7 @@ function handleApiDocs(corsHeaders: HeadersInit, securityHeaders: SecurityHeader
               }
             }
           },
-          ascii_art: {
+          text_banners: {
             jsonrpc: '2.0',
             id: 2,
             method: 'tools/call',
@@ -305,7 +341,7 @@ function handleApiDocs(corsHeaders: HeadersInit, securityHeaders: SecurityHeader
         },
         available_tools: {
           unicode_tools: ['unicode_style_text', 'list_available_styles', 'preview_styles', 'get_style_info'],
-          ascii_tools: ['ascii_art_text', 'list_figlet_fonts', 'preview_figlet_fonts']
+          text_banner_tools: ['ascii_art_text', 'list_figlet_fonts', 'preview_figlet_fonts']
         },
         available_styles: [
           'normal', 'bold', 'italic', 'boldItalic', 'underline', 'strikethrough',
@@ -330,9 +366,9 @@ function handleApiDocs(corsHeaders: HeadersInit, securityHeaders: SecurityHeader
       'Send JSON-RPC 2.0 formatted requests',
       'Use tools/call method with appropriate tool name',
       'For Unicode styling: use unicode_style_text with text and style parameters',
-      'For ASCII art: use ascii_art_text with text and font parameters',
+      'For text banners: use ascii_art_text with text and font parameters',
       'Use list_available_styles to see Unicode options',
-      'Use list_figlet_fonts to see ASCII art font options',
+      'Use list_figlet_fonts to see text banner font options',
       'Use preview tools to compare multiple styles/fonts'
     ]
   };
@@ -356,7 +392,7 @@ function handleHealth(corsHeaders: HeadersInit, securityHeaders: SecurityHeaders
     version: '1.0.0',
     services: {
       textStyling: 'operational',
-      asciiArt: 'operational',
+      textBanners: 'operational',
       mcp: 'operational'
     }
   };
@@ -403,10 +439,16 @@ function handleToolsList(request: any): any {
   };
 }
 
-async function handleToolsCall(request: any, env: Env): Promise<any> {
+async function handleToolsCall(request: any, env: Env, clientIp: string, requestId: string): Promise<any> {
   try {
-    // Pass R2 bucket to tool handler for figlet font loading
-    const result = await handleToolCall(request.params.name, request.params.arguments, env.FIGLET_FONTS);
+    // Pass R2 bucket and security context to tool handler
+    const result = await handleToolCall(
+      request.params.name,
+      request.params.arguments,
+      env.FIGLET_FONTS,
+      clientIp,
+      requestId
+    );
 
     return {
       jsonrpc: '2.0',
@@ -444,13 +486,13 @@ function handleResourcesList(request: any): any {
           mimeType: 'application/json'
         },
         {
-          uri: 'textarttools://figlet-font-definitions',
+          uri: 'textarttools://text-banner-font-definitions',
           name: 'Figlet Font Definitions',
           description: 'R2-based metadata for 322+ ASCII art fonts',
           mimeType: 'application/json'
         },
         {
-          uri: 'textarttools://ascii-art-usage',
+          uri: 'textarttools://text-banner-usage',
           name: 'ASCII Art Usage',
           description: 'Practical guidance for ASCII art tool workflows',
           mimeType: 'application/json'
@@ -477,11 +519,11 @@ function handleResourcesRead(request: any): any {
     case 'textarttools://platform-compatibility':
       content = getPlatformCompatibility();
       break;
-    case 'textarttools://figlet-font-definitions':
-      content = getFigletCharacterMappings();
+    case 'textarttools://text-banner-font-definitions':
+      content = getTextBannerCharacterMappings();
       break;
-    case 'textarttools://ascii-art-usage':
-      content = getAsciiArtUsage();
+    case 'textarttools://text-banner-usage':
+      content = getTextBannerUsage();
       break;
     case 'textarttools://request-examples':
       content = getMcpRequestExamples();
@@ -533,7 +575,7 @@ function handlePromptsList(request: any): any {
           description: 'Fix unicode_style_text failures using get_style_info and preview_styles'
         },
         {
-          name: 'ascii-art-workflow',
+          name: 'text-banner-workflow',
           description: 'Tool workflow: list_figlet_fonts → preview_figlet_fonts → ascii_art_text'
         },
         {
@@ -541,7 +583,7 @@ function handlePromptsList(request: any): any {
           description: 'Compare fonts using preview_figlet_fonts'
         },
         {
-          name: 'ascii-art-troubleshooting',
+          name: 'text-banner-troubleshooting',
           description: 'Fix ascii_art_text failures using list_figlet_fonts and preview_figlet_fonts'
         }
       ]
@@ -567,14 +609,14 @@ function handlePromptsGet(request: any): any {
     case 'unicode-troubleshooting':
       promptText = generateUnicodeTroubleshootingPrompt(args);
       break;
-    case 'ascii-art-workflow':
-      promptText = generateAsciiArtWorkflowPrompt(args);
+    case 'text-banner-workflow':
+      promptText = generateTextBannerWorkflowPrompt(args);
       break;
     case 'ascii-font-selection':
-      promptText = generateAsciiFontSelectionPrompt(args);
+      promptText = generateTextBannerFontSelectionPrompt(args);
       break;
-    case 'ascii-art-troubleshooting':
-      promptText = generateAsciiArtTroubleshootingPrompt(args);
+    case 'text-banner-troubleshooting':
+      promptText = generateTextBannerTroubleshootingPrompt(args);
       break;
     default:
       return {

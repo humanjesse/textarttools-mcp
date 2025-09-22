@@ -1,9 +1,10 @@
 /**
  * MCP Tool Definitions and Handlers for TextArtTools Unicode Styling
- * MVP Version - Simplified without complex security features
+ * Enhanced with basic security validation for public tool safety
  */
 
 import type {
+  UnicodeStyle,
   StyleTextParams,
   StyleTextResult,
   ListStylesResult,
@@ -31,40 +32,83 @@ import {
   isValidFont
 } from './figlet-engine.js';
 
+import {
+  inputSanitizer,
+  securityLogger
+} from './basic-security.js';
+
 /**
  * MCP Tool: unicode_style_text
  * Transform input text using a specified Unicode style
  */
-export async function handleStyleText(params: StyleTextParams): Promise<StyleTextResult> {
+export async function handleStyleText(params: StyleTextParams, clientIp?: string, requestId?: string): Promise<StyleTextResult> {
   const { text, style, preserve_spacing = true } = params;
+  const startTime = Date.now();
 
-  // Basic validation
-  if (!text || typeof text !== 'string') {
-    throw new Error('Text parameter is required and must be a string');
+  // Enhanced security validation
+  const textValidation = inputSanitizer.validateText(text, 'main');
+  if (!textValidation.isValid) {
+    if (clientIp && requestId) {
+      securityLogger.logSecurityEvent({
+        type: 'VALIDATION_FAILURE',
+        message: `Text validation failed: ${textValidation.errors.join(', ')}`,
+        clientIp,
+        requestId,
+        timestamp: Date.now(),
+        details: { errors: textValidation.errors, originalText: text.substring(0, 100) }
+      });
+    }
+    throw new Error(`Invalid text input: ${textValidation.errors[0]}`);
   }
 
-  if (!style || typeof style !== 'string') {
-    throw new Error('Style parameter is required and must be a string');
+  const styleValidation = inputSanitizer.validateStyle(style);
+  if (!styleValidation.isValid) {
+    if (clientIp && requestId) {
+      securityLogger.logSecurityEvent({
+        type: 'VALIDATION_FAILURE',
+        message: `Style validation failed: ${styleValidation.errors.join(', ')}`,
+        clientIp,
+        requestId,
+        timestamp: Date.now(),
+        details: { errors: styleValidation.errors, originalStyle: style }
+      });
+    }
+    throw new Error(`Invalid style: ${styleValidation.errors[0]}`);
   }
 
-  if (!isValidStyle(style)) {
-    throw new Error(`Invalid style: ${style}`);
-  }
-
-  if (text.length > 10000) {
-    throw new Error('Text too long. Maximum length is 10,000 characters');
+  // Log warnings if any
+  if (textValidation.warnings.length > 0 && clientIp && requestId) {
+    securityLogger.logSecurityEvent({
+      type: 'SUSPICIOUS_PATTERN',
+      message: `Text validation warnings: ${textValidation.warnings.join(', ')}`,
+      clientIp,
+      requestId,
+      timestamp: Date.now(),
+      details: { warnings: textValidation.warnings }
+    });
   }
 
   try {
-    const styled_text = transformText(text, style as any, preserve_spacing);
+    const styled_text = transformText(textValidation.sanitizedValue, styleValidation.sanitizedValue as UnicodeStyle, preserve_spacing);
+    const processingTime = Date.now() - startTime;
 
     return {
       styled_text,
-      style_applied: style,
-      character_count: text.length,
-      processing_time_ms: 1
+      style_applied: styleValidation.sanitizedValue as UnicodeStyle,
+      character_count: textValidation.sanitizedValue.length,
+      processing_time_ms: processingTime
     };
   } catch (error) {
+    if (clientIp && requestId) {
+      securityLogger.logSecurityEvent({
+        type: 'ERROR',
+        message: `Text transformation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        clientIp,
+        requestId,
+        timestamp: Date.now(),
+        details: { error: error instanceof Error ? error.message : 'Unknown error' }
+      });
+    }
     throw new Error(`Text transformation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
@@ -86,16 +130,23 @@ export async function handleListStyles(): Promise<ListStylesResult> {
  * MCP Tool: preview_styles
  * Show sample text in multiple styles for comparison
  */
-export async function handlePreviewStyles(params: PreviewStylesParams): Promise<PreviewStylesResult> {
+export async function handlePreviewStyles(params: PreviewStylesParams, clientIp?: string, requestId?: string): Promise<PreviewStylesResult> {
   const { text, styles } = params;
 
-  // Basic validation
-  if (!text || typeof text !== 'string') {
-    throw new Error('Text parameter is required and must be a string');
-  }
-
-  if (text.length > 50) {
-    throw new Error('Preview text too long. Maximum length is 50 characters');
+  // Enhanced security validation for preview text
+  const textValidation = inputSanitizer.validateText(text, 'preview');
+  if (!textValidation.isValid) {
+    if (clientIp && requestId) {
+      securityLogger.logSecurityEvent({
+        type: 'VALIDATION_FAILURE',
+        message: `Preview text validation failed: ${textValidation.errors.join(', ')}`,
+        clientIp,
+        requestId,
+        timestamp: Date.now(),
+        details: { errors: textValidation.errors, originalText: text.substring(0, 50) }
+      });
+    }
+    throw new Error(`Invalid preview text: ${textValidation.errors[0]}`);
   }
 
   const stylesToPreview = styles || getStyleDefinitions().map(s => s.style);
@@ -107,8 +158,8 @@ export async function handlePreviewStyles(params: PreviewStylesParams): Promise<
     }
 
     try {
-      const styled_text = transformText(text, styleName as any, true);
-      const styleInfo = getStyleInfo(styleName as any);
+      const styled_text = transformText(textValidation.sanitizedValue, styleName as UnicodeStyle, true);
+      const styleInfo = getStyleInfo(styleName as UnicodeStyle);
 
       previews.push({
         style: styleName,
@@ -141,7 +192,7 @@ export async function handleGetStyleInfo(params: GetStyleInfoParams): Promise<Ge
     throw new Error(`Invalid style: ${style}`);
   }
 
-  const styleInfo = getStyleInfo(style as any);
+  const styleInfo = getStyleInfo(style as UnicodeStyle);
 
   if (!styleInfo) {
     throw new Error(`Style information not found: ${style}`);
@@ -154,49 +205,82 @@ export async function handleGetStyleInfo(params: GetStyleInfoParams): Promise<Ge
 
 /**
  * MCP Tool: ascii_art_text
- * Generate ASCII art using figlet fonts with R2 storage
+ * Generate large stylized text banners using figlet fonts with R2 storage
  */
-export async function handleAsciiArt(params: AsciiArtParams, r2Bucket: R2Bucket): Promise<AsciiArtResult> {
+export async function handleAsciiArt(params: AsciiArtParams, r2Bucket: R2Bucket, clientIp?: string, requestId?: string): Promise<AsciiArtResult> {
   const { text, font, preserve_spacing = true } = params;
   const startTime = Date.now();
-
-  // Basic validation
-  if (!text || typeof text !== 'string') {
-    throw new Error('Text parameter is required and must be a string');
-  }
-
-  if (!font || typeof font !== 'string') {
-    throw new Error('Font parameter is required and must be a string');
-  }
 
   if (!r2Bucket) {
     throw new Error('R2 bucket is required for ASCII art generation');
   }
 
-  // Validate font exists in R2
-  const fontExists = await isValidFont(font, r2Bucket);
-  if (!fontExists) {
-    throw new Error(`Font not found in R2: ${font}`);
+  // Enhanced security validation for text banner input
+  const textValidation = inputSanitizer.validateText(text, 'main');
+  if (!textValidation.isValid) {
+    if (clientIp && requestId) {
+      securityLogger.logSecurityEvent({
+        type: 'VALIDATION_FAILURE',
+        message: `Text banner validation failed: ${textValidation.errors.join(', ')}`,
+        clientIp,
+        requestId,
+        timestamp: Date.now(),
+        details: { errors: textValidation.errors, originalText: text.substring(0, 100) }
+      });
+    }
+    throw new Error(`Invalid text input: ${textValidation.errors[0]}`);
   }
 
-  if (text.length > 100) {
-    throw new Error('Text too long for ASCII art. Maximum length is 100 characters');
+  // Additional length check for text banners (stricter limit)
+  if (textValidation.sanitizedValue.length > 100) {
+    throw new Error('Text too long for text banners. Maximum length is 100 characters');
+  }
+
+  const fontValidation = inputSanitizer.validateFont(font);
+  if (!fontValidation.isValid) {
+    if (clientIp && requestId) {
+      securityLogger.logSecurityEvent({
+        type: 'VALIDATION_FAILURE',
+        message: `Font validation failed: ${fontValidation.errors.join(', ')}`,
+        clientIp,
+        requestId,
+        timestamp: Date.now(),
+        details: { errors: fontValidation.errors, originalFont: font }
+      });
+    }
+    throw new Error(`Invalid font: ${fontValidation.errors[0]}`);
+  }
+
+  // Validate font exists in R2
+  const fontExists = await isValidFont(fontValidation.sanitizedValue, r2Bucket);
+  if (!fontExists) {
+    throw new Error(`Font not found: ${fontValidation.sanitizedValue}`);
   }
 
   try {
-    const ascii_art = await generateAsciiArt(text, font, preserve_spacing, r2Bucket);
-    const lines = ascii_art.split('\n');
+    const text_banner = await generateAsciiArt(textValidation.sanitizedValue, fontValidation.sanitizedValue, preserve_spacing, r2Bucket);
+    const lines = text_banner.split('\n');
     const processingTime = Date.now() - startTime;
 
     return {
-      ascii_art,
-      font_applied: font as any,
-      character_count: text.length,
+      ascii_art: text_banner,
+      font_applied: fontValidation.sanitizedValue as any,
+      character_count: textValidation.sanitizedValue.length,
       line_count: lines.length,
       processing_time_ms: processingTime
     };
   } catch (error) {
-    throw new Error(`ASCII art generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    if (clientIp && requestId) {
+      securityLogger.logSecurityEvent({
+        type: 'ERROR',
+        message: `Text banner generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        clientIp,
+        requestId,
+        timestamp: Date.now(),
+        details: { error: error instanceof Error ? error.message : 'Unknown error' }
+      });
+    }
+    throw new Error(`Text banner generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 
@@ -265,12 +349,12 @@ export async function handlePreviewFigletFonts(params: PreviewFigletFontsParams,
       }
 
       try {
-        const ascii_art = await generateAsciiArt(text, fontName, true, r2Bucket);
+        const text_banner = await generateAsciiArt(text, fontName, true, r2Bucket);
         const fontInfo = fontDefinitions.find(f => f.font === fontName);
 
         previews.push({
           font: fontName as any,
-          ascii_art,
+          ascii_art: text_banner,
           suitable_for: fontInfo?.suitableFor || []
         });
       } catch (error) {
@@ -289,29 +373,29 @@ export async function handlePreviewFigletFonts(params: PreviewFigletFontsParams,
 }
 
 /**
- * Handle MCP tool calls with R2 bucket support
+ * Handle MCP tool calls with R2 bucket support and security context
  */
-export async function handleToolCall(toolName: string, args: any, r2Bucket?: R2Bucket): Promise<any> {
+export async function handleToolCall(toolName: string, args: any, r2Bucket?: R2Bucket, clientIp?: string, requestId?: string): Promise<any> {
   switch (toolName) {
     // Unicode styling tools
     case 'unicode_style_text':
-      return await handleStyleText(args);
+      return await handleStyleText(args, clientIp, requestId);
 
     case 'list_available_styles':
       return await handleListStyles();
 
     case 'preview_styles':
-      return await handlePreviewStyles(args);
+      return await handlePreviewStyles(args, clientIp, requestId);
 
     case 'get_style_info':
       return await handleGetStyleInfo(args);
 
-    // ASCII art tools (require R2 bucket)
+    // Text banner tools (require R2 bucket)
     case 'ascii_art_text':
       if (!r2Bucket) {
-        throw new Error('R2 bucket is required for ASCII art generation');
+        throw new Error('R2 bucket is required for text banner generation');
       }
-      return await handleAsciiArt(args, r2Bucket);
+      return await handleAsciiArt(args, r2Bucket, clientIp, requestId);
 
     case 'list_figlet_fonts':
       if (!r2Bucket) {
@@ -411,21 +495,22 @@ export const mcpToolDefinitions = [
     }
   },
 
-  // ASCII art tools
+  // Text banner tools
   {
     name: 'ascii_art_text',
-    description: 'Generate ASCII art using figlet fonts',
+    description: 'Generate large stylized text banners using figlet fonts (decorative text, not pictures)',
+
     inputSchema: {
       type: 'object',
       properties: {
         text: {
           type: 'string',
-          description: 'The text to convert to ASCII art',
+          description: 'The text to convert to a stylized text banner',
           maxLength: 100
         },
         font: {
           type: 'string',
-          description: 'The figlet font to use (use list_figlet_fonts to see all available options)'
+          description: 'The figlet font style to use for text banner (use list_figlet_fonts to see all available options)'
         },
         preserve_spacing: {
           type: 'boolean',
@@ -447,7 +532,7 @@ export const mcpToolDefinitions = [
   },
   {
     name: 'preview_figlet_fonts',
-    description: 'Preview text in multiple figlet fonts for comparison',
+    description: 'Preview text as stylized banners in multiple figlet fonts for comparison',
     inputSchema: {
       type: 'object',
       properties: {

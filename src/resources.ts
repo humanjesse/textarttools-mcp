@@ -889,10 +889,10 @@ Tools to use: get_style_info → preview_styles`;
 }
 
 /**
- * Figlet Font Definitions Resource
- * R2-based figlet font metadata and information
+ * Text Banner Font Definitions Resource
+ * R2-based figlet font metadata for stylized text banner generation
  */
-export async function getFigletFontDefinitions(r2Bucket: R2Bucket) {
+export async function getTextBannerFontDefinitions(r2Bucket: R2Bucket) {
   try {
     // Import here to avoid circular dependencies
     const { getFigletFontDefinitions: getDefinitions } = await import('./figlet-engine.js');
@@ -900,7 +900,7 @@ export async function getFigletFontDefinitions(r2Bucket: R2Bucket) {
 
     return {
       version: '1.0.0',
-      description: 'ASCII art font definitions loaded from R2 storage',
+      description: 'Text banner font definitions loaded from R2 storage',
       totalFonts: definitions.length,
       source: 'R2 Bucket (textarttools-figlet-fonts)',
       fonts: definitions,
@@ -914,7 +914,7 @@ export async function getFigletFontDefinitions(r2Bucket: R2Bucket) {
   } catch (error) {
     return {
       version: '1.0.0',
-      description: 'Error loading figlet font definitions',
+      description: 'Error loading text banner font definitions',
       error: error instanceof Error ? error.message : 'Unknown error',
       totalFonts: 0,
       fonts: []
@@ -923,13 +923,13 @@ export async function getFigletFontDefinitions(r2Bucket: R2Bucket) {
 }
 
 /**
- * Figlet Font Character Mappings Resource
- * Information about ASCII art character mapping
+ * Text Banner Font Character Mappings Resource
+ * Information about figlet font character mapping for text banners
  */
-export function getFigletCharacterMappings() {
+export function getTextBannerCharacterMappings() {
   return {
     version: '1.0.0',
-    description: 'ASCII art character mapping information for figlet fonts',
+    description: 'Text banner character mapping information for figlet fonts',
     format: 'Figlet Font (.flf)',
     support: {
       characters: 'ASCII printable characters (32-126)',
@@ -1011,7 +1011,7 @@ export function getFigletCharacterMappings() {
         'Test on target platform before deployment'
       ],
       accessibility: [
-        'ASCII art is not screen-reader friendly',
+        'Text banners are not screen-reader friendly',
         'Provide alt text or plain text alternatives',
         'Consider context and audience accessibility needs'
       ]
@@ -1020,12 +1020,13 @@ export function getFigletCharacterMappings() {
 }
 
 /**
- * Generate ASCII Art Workflow Prompt
+ * Generate Text Banner Workflow Prompt
  */
-export function generateAsciiArtWorkflowPrompt(args: any): string {
+export function generateTextBannerWorkflowPrompt(args: any): string {
   const { text, context, maxWidth } = args;
 
-  return `To create ASCII art for "${text}":
+  return `To create a stylized text banner for "${text}":
+
 
 1. Call list_figlet_fonts to see all 322+ font options
 2. Call preview_figlet_fonts with your text to compare fonts
@@ -1038,9 +1039,9 @@ Tools to use: list_figlet_fonts → preview_figlet_fonts → ascii_art_text`;
 }
 
 /**
- * Generate ASCII Font Selection Prompt
+ * Generate Text Banner Font Selection Prompt
  */
-export function generateAsciiFontSelectionPrompt(args: any): string {
+export function generateTextBannerFontSelectionPrompt(args: any): string {
   const { text, category, count } = args;
   const previewCount = count || 5;
 
@@ -1050,15 +1051,15 @@ Call preview_figlet_fonts with:
 - text: "${text}"
 - fonts: [list of ${previewCount} fonts${category ? ` from ${category} category` : ''}]
 
-This shows actual ASCII art output for each font to help you choose.
+This shows actual text banner output for each font to help you choose.
 
 Tool to use: preview_figlet_fonts`;
 }
 
 /**
- * Generate ASCII Art Troubleshooting Prompt
+ * Generate Text Banner Troubleshooting Prompt
  */
-export function generateAsciiArtTroubleshootingPrompt(args: any): string {
+export function generateTextBannerTroubleshootingPrompt(args: any): string {
   const { text, font, error } = args;
 
   return `If ascii_art_text failed for "${text}" with font "${font}":
@@ -1074,18 +1075,18 @@ Tools to use: list_figlet_fonts → preview_figlet_fonts`;
 }
 
 /**
- * ASCII Art Usage Resource
- * Practical guidance for using ASCII art tools effectively
+ * Text Banner Usage Resource
+ * Practical guidance for using text banner tools effectively
  */
-export function getAsciiArtUsage() {
+export function getTextBannerUsage() {
   return {
     version: '1.0.0',
-    description: 'Practical guidance for ASCII art generation with figlet fonts',
+    description: 'Practical guidance for text banner generation with figlet fonts',
     workflow: {
       basic: [
         '1. Use list_figlet_fonts to see available fonts',
         '2. Use preview_figlet_fonts to compare fonts with your text',
-        '3. Use ascii_art_text to generate final ASCII art'
+        '3. Use ascii_art_text to generate final text banner'
       ],
       troubleshooting: [
         'If ascii_art_text fails, check font name with list_figlet_fonts',
@@ -1096,13 +1097,13 @@ export function getAsciiArtUsage() {
     bestPractices: {
       textLength: 'Keep text under 20 characters for best readability',
       fontSelection: 'Use preview_figlet_fonts to compare before choosing',
-      compatibility: 'ASCII art works best in monospace environments',
+      compatibility: 'Text banners work best in monospace environments',
       performance: 'Fonts are cached per request for efficiency'
     },
     toolMapping: {
       'list_figlet_fonts': 'See all 322+ available fonts with metadata',
       'preview_figlet_fonts': 'Compare how text looks in multiple fonts',
-      'ascii_art_text': 'Generate final ASCII art with chosen font'
+      'ascii_art_text': 'Generate final text banner with chosen font'
     },
     categories: {
       popular: 'Standard, Big, Slant, Banner - good for general use',
@@ -1182,9 +1183,9 @@ export function getMcpRequestExamples() {
       }
     },
 
-    asciiArtExamples: {
+    textBannerExamples: {
       'ascii_art_text': {
-        description: 'Generate ASCII art with figlet fonts',
+        description: 'Generate stylized text banners with figlet fonts',
         request: {
           jsonrpc: '2.0',
           id: 5,
@@ -1199,7 +1200,7 @@ export function getMcpRequestExamples() {
         }
       },
       'list_figlet_fonts': {
-        description: 'Get all 322+ available ASCII art fonts',
+        description: 'Get all 322+ available text banner fonts',
         request: {
           jsonrpc: '2.0',
           id: 6,
@@ -1211,7 +1212,7 @@ export function getMcpRequestExamples() {
         }
       },
       'preview_figlet_fonts': {
-        description: 'Preview text in multiple ASCII art fonts',
+        description: 'Preview text in multiple text banner fonts',
         request: {
           jsonrpc: '2.0',
           id: 7,

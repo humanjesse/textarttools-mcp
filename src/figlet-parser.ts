@@ -69,6 +69,35 @@ function parseHeader(headerLine: string): FigletHeader {
 function parseCharacter(lines: string[], header: FigletHeader, charCode: number): FigletCharacter {
   const charLines: string[] = [];
 
+  // Detect end mark character from the first non-empty line
+  let endMark: string | null = null;
+  for (const line of lines) {
+    if (line && line.trim()) {
+      const trimmed = line.trimEnd();
+      // Check for double end mark first (e.g., '@@', '##')
+      if (trimmed.length >= 2 && trimmed[trimmed.length - 1] === trimmed[trimmed.length - 2]) {
+        const candidate = trimmed[trimmed.length - 1];
+        if (candidate !== ' ' && candidate !== header.hardblank) {
+          endMark = candidate;
+          break;
+        }
+      }
+      // Then check for single end mark (e.g., '@', '#')
+      if (trimmed.length >= 1) {
+        const candidate = trimmed[trimmed.length - 1];
+        if (candidate !== ' ' && candidate !== header.hardblank) {
+          endMark = candidate;
+          break;
+        }
+      }
+    }
+  }
+
+  // Fallback to '@' if no end mark detected (maintains backward compatibility)
+  if (!endMark) {
+    endMark = '@';
+  }
+
   for (let i = 0; i < header.height; i++) {
     if (i >= lines.length) {
       charLines.push('');
@@ -77,10 +106,11 @@ function parseCharacter(lines: string[], header: FigletHeader, charCode: number)
 
     let line = lines[i].trimEnd(); // Remove trailing whitespace
 
-    // Remove end marks (@ or @@)
-    if (line.endsWith('@@')) {
+    // Remove end marks dynamically based on detected end mark
+    const doubleEndMark = endMark + endMark;
+    if (line.endsWith(doubleEndMark)) {
       line = line.slice(0, -2);
-    } else if (line.endsWith('@')) {
+    } else if (line.endsWith(endMark)) {
       line = line.slice(0, -1);
     }
 
