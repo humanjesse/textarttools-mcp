@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TextArtTools MCP Server</title>
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; }
+        .header { text-align: center; margin-bottom: 2rem; }
+        .status { padding: 1rem; background: #f0f8ff; border-radius: 8px; margin: 1rem 0; }
+        .code { background: #f5f5f5; padding: 1rem; border-radius: 4px; overflow-x: auto; }
+        .endpoint { color: #0066cc; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎨 TextArtTools MCP Server</h1>
+        <p>Unicode text styling and ASCII art generation with 23 styles and 322+ figlet fonts</p>
+    </div>
+
+    <div class="status">
+        <h2>🔗 MCP Registry Proxy</h2>
+        <p>This GitHub Pages site serves as a proxy for the TextArtTools MCP Server to satisfy MCP Registry domain validation requirements.</p>
+        <p><strong>Actual Server:</strong> <span class="endpoint">https://mcp.textarttools.com</span></p>
+        <p><strong>Registry Endpoint:</strong> <span class="endpoint">https://humanjesse.github.io/textarttools-mcp/sse</span></p>
+    </div>
+
+    <div class="code">
+        <h3>📚 Documentation & Usage</h3>
+        <p>For complete API documentation and usage examples, visit:</p>
+        <p><a href="https://mcp.textarttools.com" target="_blank">https://mcp.textarttools.com</a></p>
+    </div>
+
+    <div class="code">
+        <h3>🚀 Quick Installation</h3>
+        <p>Add to your Claude Desktop configuration:</p>
+        <pre>{
+  "mcp": {
+    "servers": {
+      "textarttools": {
+        "command": "mcp-remote",
+        "args": ["sse", "https://humanjesse.github.io/textarttools-mcp/sse"]
+      }
+    }
+  }
+}</pre>
+    </div>
+
+    <script>
+        // MCP Registry proxy endpoint
+        if (window.location.pathname.endsWith('/sse') || window.location.pathname.includes('/sse')) {
+            // Redirect SSE requests to the actual server
+            window.location.href = 'https://mcp.textarttools.com/sse';
+        }
+    </script>
+</body>
+</html>

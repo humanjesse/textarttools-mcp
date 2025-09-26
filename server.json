@@ -1,0 +1,17 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-07-09/server.schema.json",
+  "name": "io.github.humanjesse/textarttools-mcp",
+  "description": "Unicode text styling and ASCII art generation with 23 styles and 322+ figlet fonts",
+  "status": "active",
+  "repository": {
+    "url": "https://github.com/humanjesse/textarttools-mcp",
+    "source": "github"
+  },
+  "version": "1.0.0",
+  "remotes": [
+    {
+      "type": "sse",
+      "url": "https://humanjesse.github.io/textarttools-mcp/sse"
+    }
+  ]
+}
