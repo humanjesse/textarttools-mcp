@@ -77,3 +77,7 @@ temp/
 *.key
 *.crt
 secrets.json
+
+# MCP Registry CLI
+mcp-publisher
+.mcpregistry_*
