@@ -35,6 +35,42 @@ A production-ready Model Context Protocol (MCP) server providing Unicode text st
    - 100 requests per minute
    - No authentication required
 
+## 🌟 NEW: MCP Registry Installation
+
+**✨ Now available in the official MCP Registry!**
+
+The easiest way to install TextArtTools is through the MCP Registry:
+
+### Option 1: Registry Installation (Recommended)
+```json
+{
+  "mcp": {
+    "servers": {
+      "textarttools": {
+        "command": "mcp-remote",
+        "args": ["sse", "https://humanjesse.github.io/textarttools-mcp/sse"]
+      }
+    }
+  }
+}
+```
+
+### Option 2: Direct Installation (Alternative)
+```json
+{
+  "mcp": {
+    "servers": {
+      "textarttools": {
+        "command": "mcp-remote",
+        "args": ["sse", "https://mcp.textarttools.com/sse"]
+      }
+    }
+  }
+}
+```
+
+**🏆 First Text Styling MCP Server**: TextArtTools is the first and only text styling and ASCII art server in the official MCP Registry!
+
 ## Features
 
 - **✅ Text Banner Generation**: 322+ figlet fonts for large stylized text headers
