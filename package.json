@@ -43,10 +43,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-username/textarttools-mcp-server.git"
+    "url": "https://github.com/humanjesse/textarttools-mcp.git"
   },
   "bugs": {
-    "url": "https://github.com/your-username/textarttools-mcp-server/issues"
+    "url": "https://github.com/humanjesse/textarttools-mcp/issues"
   },
-  "homepage": "https://github.com/your-username/textarttools-mcp-server#readme"
+  "homepage": "https://github.com/humanjesse/textarttools-mcp#readme"
 }
