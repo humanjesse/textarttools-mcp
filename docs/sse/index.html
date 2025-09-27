@@ -3,27 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TextArtTools MCP Server - SSE Endpoint</title>
-    <meta http-equiv="refresh" content="0; url=https://mcp.textarttools.com/sse">
-    <script>
-        // Immediate redirect for MCP clients
-        window.location.replace('https://mcp.textarttools.com/sse');
-    </script>
+    <title>TextArtTools MCP Server - Endpoint Information</title>
 </head>
 <body>
     <div style="font-family: system-ui, -apple-system, sans-serif; max-width: 600px; margin: 2rem auto; text-align: center;">
         <h1>🎨 TextArtTools MCP Server</h1>
-        <p>Redirecting to MCP endpoint...</p>
-        <p>If not redirected, <a href="https://mcp.textarttools.com/sse">click here</a></p>
+        <p>This is a documentation page. For MCP integration, use the production endpoint.</p>
 
         <div style="margin-top: 2rem; padding: 1rem; background: #f8f9fa; border-radius: 8px; text-align: left;">
-            <h3>🔗 MCP Registry Proxy</h3>
-            <p>This endpoint serves as a GitHub Pages proxy to satisfy MCP Registry domain validation:</p>
+            <h3>🔗 MCP Server Information</h3>
+            <p>The TextArtTools MCP Server is available at:</p>
             <ul>
-                <li><strong>Registry URL:</strong> https://humanjesse.github.io/textarttools-mcp/sse</li>
-                <li><strong>Actual Server:</strong> https://mcp.textarttools.com/sse</li>
-                <li><strong>Purpose:</strong> Domain validation for io.github.humanjesse namespace</li>
+                <li><strong>Production Endpoint:</strong> <a href="https://mcp.textarttools.com/sse">https://mcp.textarttools.com/sse</a></li>
+                <li><strong>Registry Entry:</strong> com.textarttools/textarttools-mcp</li>
+                <li><strong>Documentation:</strong> <a href="https://mcp.textarttools.com">https://mcp.textarttools.com</a></li>
             </ul>
+
+            <h4>Installation</h4>
+            <p>Add to your Claude Desktop configuration:</p>
+            <pre style="background: #fff; padding: 0.5rem; border-radius: 4px; overflow-x: auto;">{
+  "mcp": {
+    "servers": {
+      "textarttools": {
+        "command": "mcp-remote",
+        "args": ["sse", "https://mcp.textarttools.com/sse"]
+      }
+    }
+  }
+}</pre>
         </div>
     </div>
 </body>

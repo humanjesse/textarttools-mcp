@@ -19,10 +19,10 @@
     </div>
 
     <div class="status">
-        <h2>🔗 MCP Registry Proxy</h2>
-        <p>This GitHub Pages site serves as a proxy for the TextArtTools MCP Server to satisfy MCP Registry domain validation requirements.</p>
-        <p><strong>Actual Server:</strong> <span class="endpoint">https://mcp.textarttools.com</span></p>
-        <p><strong>Registry Endpoint:</strong> <span class="endpoint">https://humanjesse.github.io/textarttools-mcp/sse</span></p>
+        <h2>🚀 Production MCP Server</h2>
+        <p>The TextArtTools MCP Server is live and ready for integration with AI agents.</p>
+        <p><strong>Production Server:</strong> <span class="endpoint">https://mcp.textarttools.com</span></p>
+        <p><strong>Registry Entry:</strong> <span class="endpoint">com.textarttools/textarttools-mcp</span></p>
     </div>
 
     <div class="code">
@@ -39,19 +39,17 @@
     "servers": {
       "textarttools": {
         "command": "mcp-remote",
-        "args": ["sse", "https://humanjesse.github.io/textarttools-mcp/sse"]
+        "args": ["sse", "https://mcp.textarttools.com/sse"]
       }
     }
   }
 }</pre>
+        <p><strong>Alternative:</strong> Install via MCP Registry: <code>com.textarttools/textarttools-mcp</code></p>
     </div>
 
     <script>
-        // MCP Registry proxy endpoint
-        if (window.location.pathname.endsWith('/sse') || window.location.pathname.includes('/sse')) {
-            // Redirect SSE requests to the actual server
-            window.location.href = 'https://mcp.textarttools.com/sse';
-        }
+        // Documentation site - no redirects needed
+        // For MCP integration, use: https://mcp.textarttools.com/sse
     </script>
 </body>
 </html>
