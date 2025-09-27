@@ -35,13 +35,13 @@ A production-ready Model Context Protocol (MCP) server providing Unicode text st
    - 100 requests per minute
    - No authentication required
 
-## 🌟 MCP Registry Installation
+## 🌟 MCP Registry Status
 
-**✨ Available in the official MCP Registry!**
+**📋 Submitted to MCP Registry!**
 
-The TextArtTools MCP Server can be installed in two ways:
+We've submitted TextArtTools to the official MCP Registry ([PR #2786](https://github.com/modelcontextprotocol/servers/pull/2786)) as the first text styling and ASCII art MCP server. While pending approval, you can install directly:
 
-### Option 1: Direct Installation (Recommended)
+### Direct Installation (Current Method)
 ```json
 {
   "mcp": {
@@ -55,10 +55,7 @@ The TextArtTools MCP Server can be installed in two ways:
 }
 ```
 
-### Option 2: Registry Installation (Alternative)
-Install via MCP Registry identifier: `com.textarttools/textarttools-mcp`
-
-**🏆 First Text Styling MCP Server**: TextArtTools is the first and only text styling and ASCII art server in the official MCP Registry!
+**🚀 Pioneer Status**: TextArtTools will be the first text styling and ASCII art server in the official MCP Registry once approved!
 
 ## Features
 

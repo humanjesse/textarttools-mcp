@@ -7,12 +7,60 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### In Progress
+- **📋 MCP Registry Submission**: Pull request submitted to official registry ([PR #2786](https://github.com/modelcontextprotocol/servers/pull/2786))
+- **🏆 Pioneer Status**: First text styling and ASCII art MCP server submission to registry
+
 ### Planned Features
 - Comprehensive test suite implementation
 - Enhanced input validation and sanitization
 - CI/CD pipeline with GitHub Actions
 - Monitoring and observability with OpenTelemetry
 - Performance optimizations and caching
+
+## [1.1.1] - 2025-09-26 - Registry Architecture Cleanup
+
+### Changed
+- **🏗️ Direct Hosting Architecture**: Removed GitHub Pages proxy redirects for cleaner registry compliance
+- **📋 Updated Documentation**: GitHub Pages now serves documentation only (no MCP redirects)
+- **🔧 Registry Integration**: Updated to use direct endpoint following IBM Context Forge pattern
+- **📖 Installation Instructions**: Updated README and DEPLOYMENT.md with direct installation as recommended method
+
+### Technical Details
+- **Registry Entry**: Will point directly to `https://mcp.textarttools.com/sse`
+- **GitHub Pages Role**: Documentation and project information only
+- **MCP Endpoint**: Direct JSON-RPC responses (no HTML redirects)
+- **Compliance**: Follows standard `io.github.*` namespace external hosting rules
+
+### Benefits
+- **✅ Eliminates redirect latency**: Direct MCP client connections
+- **✅ Better reliability**: Removes redirect failure points
+- **✅ Registry compliance**: Matches industry standard patterns
+- **✅ Maintains privacy**: Private repository with public service
+
+## [1.1.0] - 2025-09-26 - Official MCP Registry Integration
+
+### Added
+- **🌟 MCP Registry Registration**: First text styling MCP server in official registry
+- **🔗 GitHub Pages Proxy**: Professional domain validation proxy at `humanjesse.github.io/textarttools-mcp`
+- **📚 Registry Installation Guide**: Updated README with registry installation instructions
+- **🏆 First-in-Category Achievement**: Only text styling and ASCII art MCP server in registry
+
+### Changed
+- **📖 Installation Options**: Added registry-based installation as recommended method
+- **🔐 Security Enhancements**: Enhanced .gitignore for registry authentication cleanup
+- **📄 Documentation Updates**: Updated repository URLs and installation methods
+
+### Infrastructure
+- **GitHub Pro Upgrade**: Enabled private repo with public GitHub Pages
+- **Domain Validation**: Implemented professional proxy architecture for registry compliance
+- **Authentication Cleanup**: Secure handling of registry authentication tokens
+
+### Technical Details
+- Registry endpoint: `https://humanjesse.github.io/textarttools-mcp/sse`
+- Production server: `https://mcp.textarttools.com/sse` (unchanged)
+- Registry namespace: `io.github.humanjesse/textarttools-mcp`
+- Proxy redirects to maintain service continuity
 
 ## [1.0.0] - 2025-09-22 - Streamlined MCP Prompts & Resources
 
