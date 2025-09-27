@@ -22,7 +22,7 @@ A production-ready Model Context Protocol (MCP) server providing Unicode text st
        "servers": {
          "textarttools": {
            "command": "mcp-remote",
-           "args": ["sse", "https://mcp.textarttools.com/sse"]
+           "args": ["sse", "https://mcp.textarttools.com/"]
          }
        }
      }
@@ -48,7 +48,7 @@ The TextArtTools MCP Server can be installed in two ways:
     "servers": {
       "textarttools": {
         "command": "mcp-remote",
-        "args": ["sse", "https://mcp.textarttools.com/sse"]
+        "args": ["sse", "https://mcp.textarttools.com/"]
       }
     }
   }

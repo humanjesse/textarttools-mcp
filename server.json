@@ -7,11 +7,11 @@
     "url": "https://github.com/humanjesse/textarttools-mcp",
     "source": "github"
   },
-  "version": "1.1.0",
+  "version": "1.1.1",
   "remotes": [
     {
       "type": "sse",
-      "url": "https://mcp.textarttools.com/sse"
+      "url": "https://mcp.textarttools.com/"
     }
   ]
 }
