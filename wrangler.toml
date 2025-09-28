@@ -84,6 +84,10 @@ watch_dir = "src"
 port = 8788
 local_protocol = "http"
 
+# Observability configuration
+[observability]
+enabled = true
+
 # Limits (only available on paid plans)
 # [limits]
 # cpu_ms = 30000

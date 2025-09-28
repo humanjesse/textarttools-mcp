@@ -36,6 +36,17 @@ export default {
     // Basic CORS headers (will be combined with security headers)
     const corsHeaders = getCorsHeaders(env.CORS_ORIGIN || '*');
 
+    // Production security validation
+    if (env.ENVIRONMENT === 'production') {
+      if (!env.JWT_SECRET || env.JWT_SECRET.includes('your_') || env.JWT_SECRET.length < 32) {
+        console.error('❌ Production deployment with invalid JWT_SECRET');
+        return securityHeaders.createSecureResponse('Service Unavailable', {
+          status: 503,
+          headers: corsHeaders
+        }, requestId);
+      }
+    }
+
     try {
       // Handle CORS preflight requests
       if (request.method === 'OPTIONS') {
@@ -79,7 +90,9 @@ export default {
       const errorResponse = {
         error: 'Internal Server Error',
         requestId,
-        message: error instanceof Error ? error.message : 'Unknown error'
+        message: env.ENVIRONMENT === 'production'
+          ? 'Internal Server Error'
+          : error instanceof Error ? error.message : 'Unknown error'
       };
 
       return securityHeaders.createSecureResponse(JSON.stringify(errorResponse), {
@@ -135,6 +148,9 @@ async function handleSSE(request: Request, env: Env, corsHeaders: HeadersInit, s
           headers: {
             'Content-Type': 'application/json',
             'Retry-After': Math.ceil((rateResult.resetTime - Date.now()) / 1000).toString(),
+            'X-RateLimit-Limit': '100',
+            'X-RateLimit-Remaining': rateResult.remaining.toString(),
+            'X-RateLimit-Reset': new Date(rateResult.resetTime).toISOString(),
             ...corsHeaders
           }
         }, requestId);
@@ -241,17 +257,36 @@ async function handleSSE(request: Request, env: Env, corsHeaders: HeadersInit, s
       error: {
         code: -32603,
         message: 'Internal error',
-        data: error instanceof Error ? error.message : 'Unknown error'
+        data: env.ENVIRONMENT === 'production'
+          ? 'Internal error occurred'
+          : error instanceof Error ? error.message : 'Unknown error'
       }
     };
   }
 
+  // Add rate limit headers for successful responses
+  const responseHeaders: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(corsHeaders as Record<string, string>)
+  };
+
+  // Add rate limit info if available
+  if (env.MCP_SESSIONS) {
+    try {
+      const currentRateInfo = await enhancedRateLimiter.checkRateLimit(env.MCP_SESSIONS, clientIp);
+      if (currentRateInfo.allowed) {
+        responseHeaders['X-RateLimit-Limit'] = '100';
+        responseHeaders['X-RateLimit-Remaining'] = currentRateInfo.remaining.toString();
+        responseHeaders['X-RateLimit-Reset'] = new Date(currentRateInfo.resetTime).toISOString();
+      }
+    } catch (error) {
+      // Ignore rate limit header errors for successful responses
+    }
+  }
+
   return securityHeaders.createSecureResponse(JSON.stringify(response), {
     status: 200,
-    headers: {
-      'Content-Type': 'application/json',
-      ...corsHeaders
-    }
+    headers: responseHeaders
   }, requestId);
 }
 
@@ -461,7 +496,9 @@ async function handleToolsCall(request: any, env: Env, clientIp: string, request
       id: request.id,
       error: {
         code: -32603,
-        message: error instanceof Error ? error.message : 'Tool execution failed'
+        message: env.ENVIRONMENT === 'production'
+          ? 'Tool execution failed'
+          : error instanceof Error ? error.message : 'Tool execution failed'
       }
     };
   }

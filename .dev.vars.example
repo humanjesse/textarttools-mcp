@@ -1,0 +1,30 @@
+# Development Environment Variables Template
+# Copy this file to .dev.vars and fill in your development values
+# These are used for local development only
+# For production, use `wrangler secret put <name>`
+
+# Environment setting
+ENVIRONMENT=development
+
+# GitHub OAuth credentials (optional for development)
+# Get these from: https://github.com/settings/developers
+GITHUB_CLIENT_ID=your_dev_github_client_id_here
+GITHUB_CLIENT_SECRET=your_dev_github_client_secret_here
+
+# JWT secret for development (generate with: openssl rand -hex 32)
+JWT_SECRET=your_dev_jwt_secret_for_local_testing_32chars_minimum
+
+# CORS settings for development
+CORS_ORIGIN=http://localhost:3000
+
+# Rate limiting (more permissive for development)
+RATE_LIMIT_PER_MINUTE=1000
+
+# Text processing limits
+MAX_TEXT_LENGTH=10000
+
+# Security level (permissive for development)
+SECURITY_LEVEL=permissive
+
+# Optional: CSP report endpoint for development
+CSP_REPORT_ENDPOINT=/csp-report

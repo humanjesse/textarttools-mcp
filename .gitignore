@@ -76,8 +76,21 @@ temp/
 *.pem
 *.key
 *.crt
+*.p12
 secrets.json
+auth.json
+config.json
+credentials.json
+*_token
+*_secret
+*.ppk
 
 # MCP Registry CLI
 mcp-publisher
 .mcpregistry_*
+registry_tokens/
+
+# Security and audit files
+security_audit.json
+vulnerability_scan.json
+.security/
