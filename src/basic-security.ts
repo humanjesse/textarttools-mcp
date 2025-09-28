@@ -292,10 +292,11 @@ export class EnhancedRateLimiter {
       }
 
       // Update burst counter
+      // Note: Cloudflare KV requires minimum TTL of 60 seconds
       await kv.put(
         burstKey,
         JSON.stringify({ requests, window: windowStart }),
-        { expirationTtl: this.burstWindow * 2 }
+        { expirationTtl: Math.max(60, this.burstWindow * 2) }
       );
 
       return {
