@@ -493,11 +493,14 @@ export interface CSPReport {
 }
 
 export function validateCSPReport(report: unknown): report is CSPReport {
+  if (typeof report !== 'object' || report === null) {
+    return false;
+  }
+
+  const r = report as Record<string, unknown>;
   return (
-    typeof report === 'object' &&
-    report !== null &&
-    typeof report['document-uri'] === 'string' &&
-    typeof report['violated-directive'] === 'string' &&
-    typeof report['blocked-uri'] === 'string'
+    typeof r['document-uri'] === 'string' &&
+    typeof r['violated-directive'] === 'string' &&
+    typeof r['blocked-uri'] === 'string'
   );
 }
