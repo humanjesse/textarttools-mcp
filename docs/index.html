@@ -33,18 +33,23 @@
 
     <div class="code">
         <h3>🚀 Quick Installation</h3>
-        <p>Add to your Claude Desktop configuration:</p>
+        <p>Add to your Claude Desktop configuration file:</p>
         <pre>{
-  "mcp": {
-    "servers": {
-      "textarttools": {
-        "command": "mcp-remote",
-        "args": ["sse", "https://mcp.textarttools.com/"]
-      }
+  "mcpServers": {
+    "textarttools": {
+      "command": "mcp-remote",
+      "args": ["https://mcp.textarttools.com/sse"]
     }
   }
 }</pre>
         <p><strong>Coming Soon:</strong> Registry installation once <a href="https://github.com/modelcontextprotocol/servers/pull/2786" target="_blank">PR #2786</a> is approved!</p>
+    </div>
+
+    <div class="code">
+        <h3>🎬 See It In Action</h3>
+        <p>Here's how TextArtTools works with Claude Desktop:</p>
+        <img src="examplerecording.gif" alt="TextArtTools MCP Server demonstration" style="width: 100%; max-width: 600px; border-radius: 8px; margin: 1rem 0;">
+        <p><em>Example showing Unicode text styling and ASCII art generation in Claude Desktop</em></p>
     </div>
 
     <script>
