@@ -535,20 +535,39 @@ async function handleToolsCall(request: any, env: Env, clientIp: string, request
     console.log(`✅ Tool Response size: ${JSON.stringify(result).length} characters`);
     console.log(`📤 Returning result for: ${request.params.name}`);
 
+    // Format response according to MCP protocol specification
+    // Include both text content (for backwards compatibility) and structured content
     return {
       jsonrpc: '2.0',
       id: request.id,
-      result
+      result: {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify(result, null, 2)
+          }
+        ],
+        structuredContent: result,
+        isError: false
+      }
     };
   } catch (error) {
+    const errorMessage = env.ENVIRONMENT === 'production'
+      ? 'Tool execution failed'
+      : error instanceof Error ? error.message : 'Tool execution failed';
+
+    // Return tool errors in MCP format with isError flag instead of JSON-RPC errors
     return {
       jsonrpc: '2.0',
       id: request.id,
-      error: {
-        code: -32603,
-        message: env.ENVIRONMENT === 'production'
-          ? 'Tool execution failed'
-          : error instanceof Error ? error.message : 'Tool execution failed'
+      result: {
+        content: [
+          {
+            type: 'text',
+            text: errorMessage
+          }
+        ],
+        isError: true
       }
     };
   }
