@@ -94,3 +94,6 @@ registry_tokens/
 security_audit.json
 vulnerability_scan.json
 .security/
+
+# Archive and old files (keep these out of main repo)
+archive/
