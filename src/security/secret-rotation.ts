@@ -72,7 +72,7 @@ export interface RotationEvent {
   oldVersion?: number;
   newVersion?: number;
   reason: string;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
 }
 
 /**
@@ -672,7 +672,7 @@ export class SecretRotationManager {
   private scheduleHealthChecks(): void {
     this.healthCheckTimer = setInterval(async () => {
       await this.performHealthCheck();
-    }, this.config.healthCheckInterval) as any;
+    }, this.config.healthCheckInterval) as unknown as number;
   }
 
   /**
@@ -688,7 +688,7 @@ export class SecretRotationManager {
           await this.rotateSecret(type, `Automatic rotation: ${rotationCheck.reason}`);
         }
       }
-    }, 60 * 60 * 1000) as any; // Check every hour
+    }, 60 * 60 * 1000) as unknown as number; // Check every hour
   }
 
   /**

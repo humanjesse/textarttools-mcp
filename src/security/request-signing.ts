@@ -96,7 +96,7 @@ export class RequestSigner {
         '/auth/callback',
         '/auth/logout'
       ],
-      enforcementMode: (env.SECURITY_LEVEL as any) === 'strict' ? 'strict' : 'warn'
+      enforcementMode: env.SECURITY_LEVEL === 'strict' ? 'strict' : 'warn'
     };
   }
 
@@ -529,7 +529,7 @@ export class RequestSigner {
   private scheduleNonceCleanup(): void {
     this.cleanupTimer = setInterval(() => {
       this.cleanupExpiredNonces();
-    }, 5 * 60 * 1000) as any; // Every 5 minutes
+    }, 5 * 60 * 1000) as unknown as number; // Every 5 minutes
   }
 
   /**

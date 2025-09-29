@@ -6,7 +6,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import {
   SecurityHeaders,
-  createSecurityHeaders,
   getBasicSecurityHeaders,
   validateCSPReport
 } from '../security/security-headers.js';
@@ -435,7 +434,7 @@ describe('CSP Compliance Security Tests', () => {
   describe('Edge Cases', () => {
     it('should handle missing CSP report endpoint gracefully', () => {
       const envWithoutReportUri = { ...mockEnv };
-      delete (envWithoutReportUri as any).CSP_REPORT_ENDPOINT;
+      delete (envWithoutReportUri as Record<string, unknown>).CSP_REPORT_ENDPOINT;
 
       const headersWithoutReport = new SecurityHeaders(envWithoutReportUri);
       const headers = headersWithoutReport.getSecurityHeaders();
@@ -446,7 +445,7 @@ describe('CSP Compliance Security Tests', () => {
     });
 
     it('should handle empty or invalid security level', () => {
-      const envWithInvalidLevel = { ...mockEnv, SECURITY_LEVEL: 'invalid' as any };
+      const envWithInvalidLevel = { ...mockEnv, SECURITY_LEVEL: 'invalid' as 'strict' | 'standard' | 'permissive' };
       const headers = new SecurityHeaders(envWithInvalidLevel);
       const securityHeaders = headers.getSecurityHeaders();
 

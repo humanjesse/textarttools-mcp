@@ -273,7 +273,7 @@ export class TextSanitizer {
             break;
           }
         }
-      } catch (error) {
+      } catch {
         // Ignore encoding errors
       }
     }
@@ -441,14 +441,14 @@ export class TextSanitizer {
   /**
    * Sanitize for JSON-RPC response
    */
-  static sanitizeForJSONRPC(data: any): any {
+  static sanitizeForJSONRPC(data: unknown): unknown {
     if (typeof data === 'string') {
       const result = this.sanitize(data, { context: 'json', enableStrictMode: true });
       return result.sanitized;
     } else if (Array.isArray(data)) {
       return data.map(item => this.sanitizeForJSONRPC(item));
     } else if (data !== null && typeof data === 'object') {
-      const sanitized: any = {};
+      const sanitized: Record<string, unknown> = {};
       for (const [key, value] of Object.entries(data)) {
         const sanitizedKey = this.sanitize(key, { context: 'json', enableStrictMode: true }).sanitized;
         sanitized[sanitizedKey] = this.sanitizeForJSONRPC(value);
@@ -510,6 +510,6 @@ export function sanitizeForStyle(text: string, style: UnicodeStyle): Sanitizatio
   return TextSanitizer.sanitizeForTextStyling(text, style);
 }
 
-export function sanitizeJSONRPC(data: any): any {
+export function sanitizeJSONRPC(data: unknown): unknown {
   return TextSanitizer.sanitizeForJSONRPC(data);
 }

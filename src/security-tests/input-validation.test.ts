@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { InputValidator, validateText, validateStyle } from '../security/input-validator.js';
+import { InputValidator, validateStyle } from '../security/input-validator.js';
 import type { SecurityConfig } from '../security/input-validator.js';
 
 describe('Input Validation Security Tests', () => {
@@ -303,20 +303,25 @@ describe('Input Validation Security Tests', () => {
     });
 
     it('should handle null and undefined input', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const nullResult = validator.validateText(null as any, 'mcp-tool');
       expect(nullResult.isValid).toBe(false);
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const undefinedResult = validator.validateText(undefined as any, 'mcp-tool');
       expect(undefinedResult.isValid).toBe(false);
     });
 
     it('should handle non-string input', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const numberResult = validator.validateText(123 as any, 'mcp-tool');
       expect(numberResult.isValid).toBe(false);
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const objectResult = validator.validateText({} as any, 'mcp-tool');
       expect(objectResult.isValid).toBe(false);
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const arrayResult = validator.validateText([] as any, 'mcp-tool');
       expect(arrayResult.isValid).toBe(false);
     });
@@ -373,7 +378,7 @@ describe('Input Validation Security Tests', () => {
 
       regexDoSPatterns.forEach(pattern => {
         const startTime = Date.now();
-        const result = validator.validateText(pattern, 'mcp-tool');
+        validator.validateText(pattern, 'mcp-tool');
         const endTime = Date.now();
 
         expect(endTime - startTime).toBeLessThan(1000); // Should not hang

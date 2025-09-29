@@ -3,8 +3,9 @@
  * Implements allowlist-based validation with Unicode safety and injection prevention
  */
 
-import type { UnicodeStyle } from '../types.js';
-import { ValidationError } from '../types.js';
+// Types imported for future use in validation
+// import type { UnicodeStyle } from '../types.js';
+// import { ValidationError } from '../types.js';
 
 /**
  * Security configuration for input validation
@@ -155,7 +156,7 @@ export class InputValidator {
     try {
       sanitizedValue = sanitizedValue.normalize('NFC');
       unicodeNormalized = true;
-    } catch (error) {
+    } catch {
       errors.push('Failed to normalize Unicode characters');
       return this.createValidationResult(false, '', errors, warnings, originalLength, 0, unicodeNormalized);
     }

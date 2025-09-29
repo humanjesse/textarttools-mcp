@@ -199,7 +199,7 @@ export class SecurityConfigManager {
    */
   private buildSecurityHeadersConfig(env: Env, securityLevel: string): SecurityHeadersConfig {
     return {
-      level: securityLevel as any,
+      level: securityLevel as 'strict' | 'standard' | 'permissive',
       csp: {
         defaultSrc: ["'none'"],
         scriptSrc: securityLevel === 'strict' ? ["'self'", "'strict-dynamic'"] : ["'self'"],

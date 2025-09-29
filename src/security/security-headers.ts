@@ -492,7 +492,7 @@ export interface CSPReport {
   'script-sample': string;
 }
 
-export function validateCSPReport(report: any): report is CSPReport {
+export function validateCSPReport(report: unknown): report is CSPReport {
   return (
     typeof report === 'object' &&
     report !== null &&

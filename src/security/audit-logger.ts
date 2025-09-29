@@ -59,7 +59,7 @@ export interface SecurityEvent {
 
   // Context and details
   message: string;
-  details: Record<string, any>;
+  details: Record<string, unknown>;
   metadata: {
     version: string;
     environment: string;
@@ -172,7 +172,7 @@ export class SecurityAuditLogger {
       userAgent?: string;
       requestId?: string;
       sessionId?: string;
-      additionalDetails?: Record<string, any>;
+      additionalDetails?: Record<string, unknown>;
       threatIndicators?: string[];
       complianceRules?: string[];
       correlationId?: string;
@@ -483,7 +483,7 @@ export class SecurityAuditLogger {
   private scheduleFlush(): void {
     this.flushTimer = setInterval(async () => {
       await this.flush();
-    }, this.config.flushIntervalMs) as any;
+    }, this.config.flushIntervalMs) as unknown as number;
   }
 
   /**
@@ -542,7 +542,8 @@ export class SecurityAuditLogger {
   /**
    * Generate compliance report
    */
-  generateComplianceReport(startTime: number, endTime: number): {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  generateComplianceReport(_startTime: number, _endTime: number): {
     totalEvents: number;
     eventsByCategory: Record<SecurityEventCategory, number>;
     highRiskEvents: number;
@@ -637,7 +638,7 @@ export async function logInputValidationViolation(
  */
 export async function logCSPViolation(
   logger: SecurityAuditLogger,
-  report: any,
+  report: Record<string, unknown>,
   clientIp: string,
   requestId?: string
 ): Promise<void> {
