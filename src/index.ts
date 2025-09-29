@@ -63,11 +63,15 @@ export default {
 
       // Handle different endpoints
       if (url.pathname === '/' || url.pathname === '') {
-        return handleApiDocs(corsHeaders, securityHeaders, requestId);
+        return handleRoot(request, corsHeaders, securityHeaders, requestId);
       }
 
       if (url.pathname === '/sse') {
         return handleSSE(request, env, corsHeaders, securityHeaders, requestId);
+      }
+
+      if (url.pathname === '/mcp') {
+        return handleMCP(request, env, corsHeaders, securityHeaders, requestId);
       }
 
       if (url.pathname.startsWith('/auth/')) {
@@ -335,6 +339,31 @@ async function handleAuth(request: Request, env: Env, corsHeaders: HeadersInit, 
 }
 
 /**
+ * Handle root URL with better MCP auto-discovery
+ */
+function handleRoot(request: Request, corsHeaders: HeadersInit, securityHeaders: SecurityHeaders, requestId: string): Response {
+  const url = new URL(request.url);
+  const userAgent = request.headers.get('User-Agent') || '';
+
+  // Detect if this might be an MCP client attempting auto-discovery
+  if (request.method === 'POST' || userAgent.includes('mcp') || request.headers.get('Content-Type') === 'application/json') {
+    // Redirect MCP requests to the SSE endpoint
+    return Response.redirect(`${url.origin}/sse`, 307);
+  }
+
+  // For browser/human users, show API documentation
+  return handleApiDocs(corsHeaders, securityHeaders, requestId);
+}
+
+/**
+ * Handle MCP endpoint (Streamable HTTP transport)
+ */
+async function handleMCP(request: Request, env: Env, corsHeaders: HeadersInit, securityHeaders: SecurityHeaders, requestId: string): Promise<Response> {
+  // MCP Streamable HTTP transport - same logic as SSE but different endpoint
+  return handleSSE(request, env, corsHeaders, securityHeaders, requestId);
+}
+
+/**
  * Handle API documentation for AIs
  */
 function handleApiDocs(corsHeaders: HeadersInit, securityHeaders: SecurityHeaders, requestId: string): Response {
@@ -342,52 +371,63 @@ function handleApiDocs(corsHeaders: HeadersInit, securityHeaders: SecurityHeader
     name: 'TextArtTools MCP Server',
     description: 'Unicode text styling and ASCII art generation API using Model Context Protocol (MCP)',
     version: '1.1.0',
+    protocolVersion: '2024-11-05',
     endpoints: {
-      mcp: {
+      mcp_sse: {
         url: '/sse',
         method: 'POST',
+        transport: 'Server-Sent Events',
         description: 'MCP JSON-RPC 2.0 endpoint for text styling and ASCII art generation',
         content_type: 'application/json',
-        example_requests: {
-          unicode_styling: {
-            jsonrpc: '2.0',
-            id: 1,
-            method: 'tools/call',
-            params: {
-              name: 'unicode_style_text',
-              arguments: {
-                text: 'Hello World',
-                style: 'bold'
-              }
-            }
-          },
-          text_banners: {
-            jsonrpc: '2.0',
-            id: 2,
-            method: 'tools/call',
-            params: {
-              name: 'ascii_art_text',
-              arguments: {
-                text: 'Hello',
-                font: 'Standard'
-              }
+      },
+      mcp_streamable: {
+        url: '/mcp',
+        method: 'POST',
+        transport: 'Streamable HTTP',
+        description: 'MCP JSON-RPC 2.0 endpoint (alternative transport)',
+        content_type: 'application/json',
+      },
+      example_requests: {
+        unicode_styling: {
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'tools/call',
+          params: {
+            name: 'unicode_style_text',
+            arguments: {
+              text: 'Hello World',
+              style: 'bold'
             }
           }
         },
-        available_tools: {
-          unicode_tools: ['unicode_style_text', 'list_available_styles', 'preview_styles', 'get_style_info'],
-          text_banner_tools: ['ascii_art_text', 'list_figlet_fonts', 'preview_figlet_fonts']
+        text_banners: {
+          jsonrpc: '2.0',
+          id: 2,
+          method: 'tools/call',
+          params: {
+            name: 'ascii_art_text',
+            arguments: {
+              text: 'Hello',
+              font: 'Standard'
+            }
+          }
+        }
+      },
+      available_tools: {
+        unicode_tools: ['unicode_style_text', 'list_available_styles', 'preview_styles', 'get_style_info'],
+        text_banner_tools: ['ascii_art_text', 'list_figlet_fonts', 'preview_figlet_fonts']
+      },
+      discovery_commands: {
+        get_all_styles: {
+          method: 'tools/call',
+          params: { name: 'list_available_styles', arguments: {} },
+          description: 'Get complete list of available Unicode text styles'
         },
-        available_styles: [
-          'normal', 'bold', 'italic', 'boldItalic', 'underline', 'strikethrough',
-          'subscript', 'superscript', 'circled', 'fraktur', 'doubleStruck',
-          'monospace', 'cursive', 'squared', 'flipped', 'zalgo', 'blue',
-          'parenthesized', 'negativeCircled', 'boldSerif', 'italicSerif',
-          'boldItalicSerif', 'boldFraktur'
-        ],
-        available_fonts: [
-          'Big', 'Standard', 'Slant', 'Banner', 'Block', 'Small', 'Bubble', '3D-ASCII'
-        ]
+        get_all_fonts: {
+          method: 'tools/call',
+          params: { name: 'list_figlet_fonts', arguments: {} },
+          description: 'Get complete list of available figlet fonts for text banners'
+        }
       },
       health: {
         url: '/health',
@@ -396,15 +436,16 @@ function handleApiDocs(corsHeaders: HeadersInit, securityHeaders: SecurityHeader
       }
     },
     instructions_for_ai: [
-      'Use POST method to /sse endpoint',
+      'Use POST method to /sse or /mcp endpoint (both support same JSON-RPC 2.0 protocol)',
       'Set Content-Type: application/json header',
-      'Send JSON-RPC 2.0 formatted requests',
-      'Use tools/call method with appropriate tool name',
+      'Send JSON-RPC 2.0 formatted requests with method "tools/call"',
+      'FIRST: Use list_available_styles to discover all Unicode text styles',
+      'FIRST: Use list_figlet_fonts to discover all available text banner fonts',
       'For Unicode styling: use unicode_style_text with text and style parameters',
       'For text banners: use ascii_art_text with text and font parameters',
-      'Use list_available_styles to see Unicode options',
-      'Use list_figlet_fonts to see text banner font options',
-      'Use preview tools to compare multiple styles/fonts'
+      'Use preview_styles and preview_figlet_fonts to compare options',
+      'Use get_style_info for detailed Unicode style information',
+      'Protocol version: 2024-11-05'
     ]
   };
 
@@ -424,7 +465,8 @@ function handleHealth(corsHeaders: HeadersInit, securityHeaders: SecurityHeaders
   const healthStatus = {
     status: 'healthy',
     timestamp: new Date().toISOString(),
-    version: '1.0.0',
+    version: '1.1.0',
+    protocolVersion: '2024-11-05',
     services: {
       textStyling: 'operational',
       textBanners: 'operational',
@@ -449,7 +491,7 @@ function handleInitialize(request: any): any {
     jsonrpc: '2.0',
     id: request.id,
     result: {
-      protocolVersion: '1.0.0',
+      protocolVersion: '2024-11-05',
       capabilities: {
         tools: {},
         resources: {},
@@ -457,8 +499,8 @@ function handleInitialize(request: any): any {
       },
       serverInfo: {
         name: 'textarttools-mcp-server',
-        version: '1.0.0',
-        description: 'Unicode text styling server'
+        version: '1.1.0',
+        description: 'Unicode text styling and ASCII art generation server'
       }
     }
   };
@@ -476,6 +518,10 @@ function handleToolsList(request: any): any {
 
 async function handleToolsCall(request: any, env: Env, clientIp: string, requestId: string): Promise<any> {
   try {
+    // Debug logging for Claude Desktop tool calls
+    console.log(`🔧 Tool Call from Client: ${request.params.name}`);
+    console.log(`📝 Arguments received:`, JSON.stringify(request.params.arguments, null, 2));
+
     // Pass R2 bucket and security context to tool handler
     const result = await handleToolCall(
       request.params.name,
@@ -484,6 +530,10 @@ async function handleToolsCall(request: any, env: Env, clientIp: string, request
       clientIp,
       requestId
     );
+
+    // Debug logging for response
+    console.log(`✅ Tool Response size: ${JSON.stringify(result).length} characters`);
+    console.log(`📤 Returning result for: ${request.params.name}`);
 
     return {
       jsonrpc: '2.0',

@@ -92,6 +92,7 @@ export class RequestSigner {
       ],
       sensitiveEndpoints: [
         '/sse',
+        '/mcp',
         '/auth/callback',
         '/auth/logout'
       ],

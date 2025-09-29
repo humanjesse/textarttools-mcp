@@ -196,7 +196,7 @@ export class SecurityAuditLogger {
       message: details.message,
       details: details.additionalDetails || {},
       metadata: {
-        version: '1.0.0',
+        version: '1.1.0',
         environment: process.env.NODE_ENV || 'development',
         component: 'textarttools-mcp-server'
       },
@@ -358,7 +358,7 @@ export class SecurityAuditLogger {
         count: this.alertCounts.get(event.category)
       },
       metadata: {
-        version: '1.0.0',
+        version: '1.1.0',
         environment: process.env.NODE_ENV || 'development',
         component: 'audit-logger'
       },

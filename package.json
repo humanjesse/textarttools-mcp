@@ -1,6 +1,6 @@
 {
   "name": "textarttools-mcp-server",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Model Context Protocol server for Unicode text styling powered by Cloudflare Workers",
   "main": "dist/index.js",
   "type": "module",

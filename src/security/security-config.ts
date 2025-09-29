@@ -264,7 +264,7 @@ export class SecurityConfigManager {
       timestampToleranceMs: securityLevel === 'strict' ? 2 * 60 * 1000 : 5 * 60 * 1000,
       nonceWindowMs: 30 * 60 * 1000,
       requiredHeaders: ['x-timestamp', 'x-nonce', 'x-signature', 'content-type'],
-      sensitiveEndpoints: ['/sse', '/auth/callback', '/auth/logout'],
+      sensitiveEndpoints: ['/sse', '/mcp', '/auth/callback', '/auth/logout'],
       enforcementMode: securityLevel === 'strict' ? 'strict' : 'warn'
     };
   }

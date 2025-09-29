@@ -456,7 +456,8 @@ export const mcpToolDefinitions = [
     inputSchema: {
       type: 'object',
       properties: {},
-      additionalProperties: false
+      additionalProperties: false,
+      required: []
     }
   },
   {
@@ -527,7 +528,8 @@ export const mcpToolDefinitions = [
     inputSchema: {
       type: 'object',
       properties: {},
-      additionalProperties: false
+      additionalProperties: false,
+      required: []
     }
   },
   {

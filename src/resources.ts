@@ -11,7 +11,7 @@
  */
 export function getStyleDefinitions() {
   return {
-    version: '1.0.0',
+    version: '1.1.0',
     totalStyles: 23,
     styles: [
       {
@@ -392,7 +392,7 @@ export function getStyleDefinitions() {
  */
 export function getCharacterMappings() {
   return {
-    version: '1.0.0',
+    version: '1.1.0',
     description: 'Character mapping tables for Unicode text transformations',
     mappings: {
       bold: {
@@ -476,7 +476,7 @@ export function getCharacterMappings() {
  */
 export function getUsageExamples() {
   return {
-    version: '1.0.0',
+    version: '1.1.0',
     description: 'Sample text transformations and practical use cases',
     categories: {
       social_media: {
@@ -620,7 +620,7 @@ export function getUsageExamples() {
  */
 export function getPlatformCompatibility() {
   return {
-    version: '1.0.0',
+    version: '1.1.0',
     description: 'Style compatibility across major platforms and applications',
     platforms: {
       social_media: {
@@ -899,7 +899,7 @@ export async function getTextBannerFontDefinitions(r2Bucket: R2Bucket) {
     const definitions = await getDefinitions(r2Bucket);
 
     return {
-      version: '1.0.0',
+      version: '1.1.0',
       description: 'Text banner font definitions loaded from R2 storage',
       totalFonts: definitions.length,
       source: 'R2 Bucket (textarttools-figlet-fonts)',
@@ -913,7 +913,7 @@ export async function getTextBannerFontDefinitions(r2Bucket: R2Bucket) {
     };
   } catch (error) {
     return {
-      version: '1.0.0',
+      version: '1.1.0',
       description: 'Error loading text banner font definitions',
       error: error instanceof Error ? error.message : 'Unknown error',
       totalFonts: 0,
@@ -928,7 +928,7 @@ export async function getTextBannerFontDefinitions(r2Bucket: R2Bucket) {
  */
 export function getTextBannerCharacterMappings() {
   return {
-    version: '1.0.0',
+    version: '1.1.0',
     description: 'Text banner character mapping information for figlet fonts',
     format: 'Figlet Font (.flf)',
     support: {
@@ -1080,7 +1080,7 @@ Tools to use: list_figlet_fonts → preview_figlet_fonts`;
  */
 export function getTextBannerUsage() {
   return {
-    version: '1.0.0',
+    version: '1.1.0',
     description: 'Practical guidance for text banner generation with figlet fonts',
     workflow: {
       basic: [
@@ -1120,9 +1120,9 @@ export function getTextBannerUsage() {
  */
 export function getMcpRequestExamples() {
   return {
-    version: '1.0.0',
+    version: '1.1.0',
     description: 'Correct MCP JSON-RPC 2.0 request format examples',
-    endpoint: 'POST /sse (Content-Type: application/json)',
+    endpoint: 'POST /sse or /mcp (Content-Type: application/json)',
 
     unicodeExamples: {
       'unicode_style_text': {
@@ -1259,7 +1259,24 @@ export function getMcpRequestExamples() {
     },
 
     curlExamples: {
-      unicode_style_text: `curl -X POST https://mcp.textarttools.com/sse \\
+      unicode_style_text: `# Using /sse endpoint
+curl -X POST https://mcp.textarttools.com/sse \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "tools/call",
+    "params": {
+      "name": "unicode_style_text",
+      "arguments": {
+        "text": "Hello World",
+        "style": "bold"
+      }
+    }
+  }'
+
+# Or using /mcp endpoint (same result)
+curl -X POST https://mcp.textarttools.com/mcp \\
   -H "Content-Type: application/json" \\
   -d '{
     "jsonrpc": "2.0",
@@ -1274,7 +1291,8 @@ export function getMcpRequestExamples() {
     }
   }'`,
 
-      ascii_art_text: `curl -X POST https://mcp.textarttools.com/sse \\
+      ascii_art_text: `# Both endpoints work identically
+curl -X POST https://mcp.textarttools.com/sse \\
   -H "Content-Type: application/json" \\
   -d '{
     "jsonrpc": "2.0",
@@ -1295,7 +1313,7 @@ export function getMcpRequestExamples() {
       wrongMethod: 'Use POST, not GET',
       invalidJson: 'Ensure JSON is properly formatted with correct quotes',
       missingId: 'Every request needs a unique "id" field',
-      wrongEndpoint: 'Use /sse endpoint, not /api or /'
+      wrongEndpoint: 'Use /sse or /mcp endpoint, not /api or /'
     }
   };
 }

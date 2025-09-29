@@ -80,7 +80,7 @@ We've submitted TextArtTools to the official MCP Registry ([PR #2786](https://gi
 Test the live server directly:
 
 ```bash
-# Generate text banners
+# Generate text banners (using /sse endpoint)
 curl -X POST https://mcp.textarttools.com/sse \
   -H "Content-Type: application/json" \
   -d '{
@@ -96,7 +96,23 @@ curl -X POST https://mcp.textarttools.com/sse \
     }
   }'
 
-# Transform text to bold style
+# Alternative using /mcp endpoint (Streamable HTTP)
+curl -X POST https://mcp.textarttools.com/mcp \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "tools/call",
+    "params": {
+      "name": "ascii_art_text",
+      "arguments": {
+        "text": "Hello",
+        "font": "Big"
+      }
+    }
+  }'
+
+# Transform text to bold style (both endpoints work identically)
 curl -X POST https://mcp.textarttools.com/sse \
   -H "Content-Type: application/json" \
   -d '{
@@ -323,7 +339,13 @@ If you want to run your own instance or contribute to development:
 
 4. **Test locally**:
    ```bash
+   # Test with /sse endpoint
    curl -X POST http://localhost:8788/sse \
+     -H "Content-Type: application/json" \
+     -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
+
+   # Or test with /mcp endpoint
+   curl -X POST http://localhost:8788/mcp \
      -H "Content-Type: application/json" \
      -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
    ```
@@ -356,7 +378,8 @@ docker-compose up build
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/` | GET | API documentation for AI discovery |
-| `/sse` | POST | MCP JSON-RPC 2.0 endpoint |
+| `/sse` | POST | MCP JSON-RPC 2.0 endpoint (Server-Sent Events) |
+| `/mcp` | POST | MCP JSON-RPC 2.0 endpoint (Streamable HTTP) |
 | `/health` | GET | Server health check |
 | `/auth/*` | Various | OAuth authentication (optional) |
 
@@ -423,7 +446,7 @@ npx wrangler tail --env production
 ```
 
 **🔍 Log Data Includes:**
-- HTTP method and endpoint (`POST /sse`)
+- HTTP method and endpoint (`POST /sse` or `POST /mcp`)
 - Client IP addresses for usage tracking
 - MCP tool names (`unicode_style_text`, `ascii_art_text`, etc.)
 - Processing times and performance metrics
