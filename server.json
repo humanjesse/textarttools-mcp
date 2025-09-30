@@ -1,8 +1,8 @@
 {
-  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-09-16/server.schema.json",
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-09-29/server.schema.json",
   "name": "com.textarttools/textarttools-mcp",
   "description": "Transform text with 23 Unicode styles and create stylized banners with 322+ figlet fonts.",
-  "status": "active",
+  "websiteUrl": "https://humanjesse.github.io/textarttools-mcp/",
   "repository": {
     "url": "https://github.com/humanjesse/textarttools-mcp",
     "source": "github"
