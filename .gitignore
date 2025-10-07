@@ -89,6 +89,7 @@ credentials.json
 mcp-publisher
 .mcpregistry_*
 registry_tokens/
+mcp-codes/
 
 # Security and audit files
 security_audit.json
@@ -97,3 +98,6 @@ vulnerability_scan.json
 
 # Archive and old files (keep these out of main repo)
 archive/
+
+# Outdated documentation
+ARCHITECTURE.md

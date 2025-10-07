@@ -4,6 +4,10 @@
 
 A production-ready Model Context Protocol (MCP) server providing Unicode text styling capabilities. Transform text using 23 different Unicode styles including bold, italic, cursive, fraktur, zalgo, and many more. Currently deployed on Cloudflare Workers and ready for immediate integration with AI agents.
 
+## 📺 Demo
+
+![TextArtTools Demo](demo.gif)
+
 ## 🚀 Quick Start - Use the Live Server
 
 **No setup required!** The server is live and operational:
