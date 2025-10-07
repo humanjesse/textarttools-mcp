@@ -102,4 +102,9 @@ archive/
 # Outdated documentation
 ARCHITECTURE.md
 CHANGELOG.md
+DEPLOYMENT.md
+SECURITY.md
 metadata/
+
+# Internal scripts
+upload-fonts.sh
