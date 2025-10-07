@@ -210,12 +210,10 @@ To use the live MCP server with Claude Desktop:
 2. **Configure Claude Desktop** (`claude_desktop_config.json`):
    ```json
    {
-     "mcp": {
-       "servers": {
-         "textarttools": {
-           "command": "mcp-remote",
-           "args": ["sse", "https://mcp.textarttools.com/sse"]
-         }
+     "mcpServers": {
+       "textarttools": {
+         "command": "mcp-server",
+         "args": ["https://mcp.textarttools.com/sse"]
        }
      }
    }

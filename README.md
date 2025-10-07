@@ -18,12 +18,10 @@ A production-ready Model Context Protocol (MCP) server providing Unicode text st
 2. **Add to Claude Desktop config** (`claude_desktop_config.json`):
    ```json
    {
-     "mcp": {
-       "servers": {
-         "textarttools": {
-           "command": "mcp-remote",
-           "args": ["sse", "https://mcp.textarttools.com/"]
-         }
+     "mcpServers": {
+       "textarttools": {
+         "command": "mcp-server",
+         "args": ["https://mcp.textarttools.com/sse"]
        }
      }
    }
@@ -44,12 +42,10 @@ We've submitted TextArtTools to the official MCP Registry ([PR #2786](https://gi
 ### Direct Installation (Current Method)
 ```json
 {
-  "mcp": {
-    "servers": {
-      "textarttools": {
-        "command": "mcp-remote",
-        "args": ["sse", "https://mcp.textarttools.com/"]
-      }
+  "mcpServers": {
+    "textarttools": {
+      "command": "mcp-server",
+      "args": ["https://mcp.textarttools.com/sse"]
     }
   }
 }

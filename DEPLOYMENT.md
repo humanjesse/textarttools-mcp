@@ -11,12 +11,10 @@
 ### Claude Desktop Integration
 ```json
 {
-  "mcp": {
-    "servers": {
-      "textarttools": {
-        "command": "mcp-remote",
-        "args": ["sse", "https://mcp.textarttools.com/sse"]
-      }
+  "mcpServers": {
+    "textarttools": {
+      "command": "mcp-server",
+      "args": ["https://mcp.textarttools.com/sse"]
     }
   }
 }
@@ -286,12 +284,10 @@ Add to your `claude_desktop_config.json`:
 
 ```json
 {
-  "mcp": {
-    "servers": {
-      "textarttools": {
-        "command": "mcp-remote",
-        "args": ["sse", "https://your-worker.your-subdomain.workers.dev/sse"]
-      }
+  "mcpServers": {
+    "textarttools": {
+      "command": "mcp-server",
+      "args": ["https://your-worker.your-subdomain.workers.dev/sse"]
     }
   }
 }
